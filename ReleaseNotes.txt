@@ -1,0 +1,27 @@
+v2.00 
+- Rewrote the original batch script into PowerShell.
+
+v2.01 
+- Added PowerShell calling for a .JSON file for configurations.
+- Added an additional external script to create the JSON file.
+- Added an additional external script to query .EVTX files.
+
+v2.10 
+- Fixed an issue where several values were not being added to a file.
+- Added check to remove files added to the local computer's temporary folder.
+- Added check to see if script was ran as administrator.
+- Added new prompt that will ask if operator would like to remove extra files and folders after the collection is completed.
+- Added "Exit Without Collection" option.
+- Moved Antivirus Updating to Option 0, moving all other options up.
+
+v2.11
+- Removed code that would create a new temporary folder on the operated machine, keeping in line the passive capabilities of the script.
+
+v2.20
+- Added hard drive information (including serial number and model) to gathering task.
+- Added MAC address collection to gathering tasks; will only pull the very first MAC.
+- Fixed an issue where setup-powershell.ps1 does not write base name to JSON file.
+- Fixed an issue where setup-powershell.ps1 was not overwriting the JSON file properly.
+- Fixed an issue where Move-Item commands mistakenly had -Recurse as a parameter.
+- Changed/simplified save location of exported/collected files; will now appear above the directory above where the script is ran.
+- Changed the $ComputerName_$SerialNumber.txt file holding basic user input to $ComputerName-Info.txt
