@@ -6,7 +6,7 @@ This is a README file to provide instructions on how to operate the SuperCat too
 
 
 **********************************
-*Preperation of the SuperCat Tool*
+*Preparation of the SuperCat Tool*
 **********************************
 
 After you have downloaded the SuperCat Tool you will need to populate the other tools onto the disc to ensure you have the latest versions.
