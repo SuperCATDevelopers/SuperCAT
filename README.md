@@ -1,11 +1,7 @@
 # SuperCAT
 This is a README file to provide instructions on how to operate the SuperCat tool.  This tool will only support Windows 7 and Window 10
 
-NOTE:  This is tool is to be used to assit Automatic Test System (ATS) PMO ISSM and Mission Defense Teams to Identify Assests, Detect abnormalities, and Protect Assets relating to Ground Support Equipment(GSE) 
 
-NOTE:  If given a Pre-Coordinated Action (PCA) to conduct a mission from ATS PMO ISSM, this does not constitute authorization to make changes to the GSE.  
-
-NOTE:  If anomolies are detected that would constitute an incident IAW with T.O. 33-1-38 report them accordingly to ATS PMO ISSM.
 
 
 
@@ -39,8 +35,7 @@ There are two ways to preconfigure the script to populate the location fields.
 2. Locate the config.txt or config.json file and populate the fields from there.
 
 BaseName is the base where you are located.
-System is are the system names (ex. VIPER1, VIPER2, VIPER3)
-Location is either the Unit, Building, ToolCrib be as descriptive as you need to find in the event you need to track down equipment again.
+
 
 
 
