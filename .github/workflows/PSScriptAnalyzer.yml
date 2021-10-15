@@ -1,4 +1,4 @@
-name: CI
+name: PSScriptAnalyzer
 on: [pull_request]
 jobs:
   lint:
