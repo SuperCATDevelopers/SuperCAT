@@ -1,5 +1,11 @@
 name: PSScriptAnalyzer
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      -main
 jobs:
   lint:
     name: Run PSSA
@@ -10,3 +16,6 @@ jobs:
       uses: devblackops/github-action-psscriptanalyzer@master
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
+        sendComment: true
+        failOnWarnings: false
+        failOnInfos: false
