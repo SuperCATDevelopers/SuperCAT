@@ -10,3 +10,6 @@ jobs:
       uses: devblackops/github-action-psscriptanalyzer@master
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
+        sendComment: true
+        failOnWarnings: false
+        failOnInfos: false
