@@ -34,6 +34,7 @@ jobs:
             report_name: module_tests
             report_title: My Module Tests
             github_token: ${{ secrets.GITHUB_TOKEN }}
+            tests_fail_step: true
         - name: dump test results
           shell: pwsh
           run: |
