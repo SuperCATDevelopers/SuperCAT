@@ -17,7 +17,7 @@ This file will be placed in the [folder]
 
 For the latest SCAP Compliance Checker (SCC) you can obtain that tool on DoD Cyber Exchange.  https://cyber.mil/stigs/scap/
 
-This file will be placed in the [folder]
+This file will be placed in the [folder].
 
 Once the scripts and files have been placed on the DVD, you can complete the burning process of the DVD to take to the System(s) under test.
 
