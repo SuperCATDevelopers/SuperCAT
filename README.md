@@ -2,7 +2,7 @@
 This is a README file to provide instructions on how to operate the SuperCat tool.  This tool will only support Windows 7 and Window 10
 
 
-
+[![Pester](https://github.com/lordneeko/SuperCAT/actions/workflows/PesterTest.yml/badge.svg)](https://github.com/lordneeko/SuperCAT/actions/workflows/PesterTest.yml)
 
 
 **********************************
