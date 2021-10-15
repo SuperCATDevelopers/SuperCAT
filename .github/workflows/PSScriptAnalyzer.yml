@@ -1,19 +1,12 @@
-- name: PSScriptAnalyzer checks
-  # You may pin to the exact commit or the version.
-  # uses: devblackops/github-action-psscriptanalyzer@819c15c7d02dec0611fe3ded6f8e259b0b925754
-  uses: microsoft/psscriptanalyzer-action@v1.0
-  with:
-    # The root directory to run PSScriptAnalyzer on. By default, this is the root of the repository.
-    rootPath: # optional
-    # The path to a PSScriptAnalyser settings file to control rules to execute.
-    settingsPath: # optional
-    # GitHub token the action will use to send comments back to PR with.
-    repoToken: # optional
-    # Send comment back to PR with PSScriptAnalyzer summary if any issues where found.
-    sendComment: # optional, default is true
-    # Enable/disable failing the action on PSScriptAnalyzer error items.
-    failOnErrors: # optional, default is true
-    # Enable/disable failing the action on PSScriptAnalyzer warning items.
-    failOnWarnings: # optional, default is true
-    # Enable/disable failing the action on PSScriptAnalyzer informational items.
-    failOnInfos: # optional
+name: CI
+on: [pull_request]
+jobs:
+  lint:
+    name: Run PSSA
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: lint
+      uses: devblackops/github-action-psscriptanalyzer@master
+      with:
+        repoToken: ${{ secrets.GITHUB_TOKEN }}
