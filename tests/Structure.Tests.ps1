@@ -1,12 +1,14 @@
 Describe 'SuperCAT Structure' {
 	Context 'File Structure' {
-		It 'setup_powershell.ps1 exists' {
+		It 'SuperCAT files are in the correct location' {
 			$currentDir = [string](Get-Location)
-			$currentDir + "\setup_powershell.ps1" | Should -Exist
-		}
-		It 'current directory' {
-			$currentDir = Get-Location
-			$currentDir | Should -Be "D:\a\SuperCAT\SuperCAT"
+			$currentDir + "\setup-powershell.ps1" | Should -Exist
+			$currentDir + "\DISA" | Should -Exist
+			$currentDir + "\AV" | Should -Exist
+			$currentDir + "\Export\export-offline-eventlogs.ps1" | Should -Exist
+			$currentDir + "\Export\export-offline-registry.ps1" | Should -Exist
+			$currentDir + "\Tool\SuperCAT.ps1" | Should -Exist
 		}
 	}
 }
+
