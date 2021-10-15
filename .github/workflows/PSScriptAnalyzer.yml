@@ -1,5 +1,5 @@
 name: PSScriptAnalyzer
-on: [pull_request]
+on: push
 jobs:
   lint:
     name: Run PSSA
