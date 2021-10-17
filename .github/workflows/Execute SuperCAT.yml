@@ -15,7 +15,9 @@ jobs:
       steps:
       - uses: actions/checkout@v2.3.5
       - name: Checkout Code and run SuperCAT
-        run: .\Tool\SuperCAT.ps1
+        run: |
+          Get-Children -Recurse
+          .\Tool\SuperCAT.ps1
         shell: powershell
        
             
