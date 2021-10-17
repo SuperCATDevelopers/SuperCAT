@@ -17,7 +17,8 @@ jobs:
       - name: Checkout Code and run SuperCAT
         run: |
           Get-ChildItem -Recurse
-          .\Tool\SuperCAT.ps1
+          cd Tool
+          .\SuperCAT.ps1
         shell: powershell
        
             
