@@ -11,18 +11,19 @@ Describe 'SuperCAT Structure' {
 		It 'AV Directory Check' {
 			$currentDir = [string](Get-Location)
 			$currentDir + "\AV" | Should -Exist
+			$currentDir + "\AV\w32" | Should -Exist
+			$currentDir + "\AV\w64" | Should -Exist
+			$currentDir + "\AV\DAT" | Should -Exist
 		}
-		It 'Export EventLogs check' {
+		It 'QuickLookTool checks' {
 			$currentDir = [string](Get-Location)
-			$currentDir + "\Export\export-offline-eventlogs.ps1" | Should -Exist
+			$currentDir + "\Tool\QuickLookTools\export-offline-eventlogs.ps1" | Should -Exist
+			$currentDir + "\Tool\QuickLookTools\export-offline-registry.ps1" | Should -Exist
 		}
-		It 'Export Registry Check' {
-			$currentDir = [string](Get-Location)
-			$currentDir + "\Export\export-offline-registry.ps1" | Should -Exist
-		}
-		It 'SuperCAT main file check' {
+		It 'SuperCAT main file checks' {
 			$currentDir = [string](Get-Location)
 			$currentDir + "\Tool\SuperCAT.ps1" | Should -Exist
+			$currentDir + "\Tool\config.json" | Should -Exist
 		}
 	}
 }
