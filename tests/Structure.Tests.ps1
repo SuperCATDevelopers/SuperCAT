@@ -1,3 +1,4 @@
+# This test validates the folder structure of SuperCAT to ensure that all the essential files will be in the correct location on disk.
 Describe 'SuperCAT Structure' {
 	Context 'File Structure' {
 		It 'Setup file check' {
