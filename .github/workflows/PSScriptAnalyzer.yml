@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**.ps1'
   pull_request:
 jobs:
   lint:
