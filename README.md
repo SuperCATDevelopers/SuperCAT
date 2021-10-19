@@ -3,6 +3,7 @@ This is a README file to provide instructions on how to operate the SuperCat too
 
 
 [![Pester](https://github.com/lordneeko/SuperCAT/actions/workflows/PesterTest.yml/badge.svg)](https://github.com/lordneeko/SuperCAT/actions/workflows/PesterTest.yml)
+[![PSScriptAnalyzer](https://github.com/SuperCATDevelopers/SuperCAT/actions/workflows/PSScriptAnalyzer.yml/badge.svg?branch=main)](https://github.com/SuperCATDevelopers/SuperCAT/actions/workflows/PSScriptAnalyzer.yml)
 
 
 **********************************
