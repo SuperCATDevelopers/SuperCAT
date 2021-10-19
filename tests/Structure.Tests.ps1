@@ -17,7 +17,7 @@ Describe 'SuperCAT Structure' {
 		}
 		It 'QuickLookTool checks' {
 			$currentDir = [string](Get-Location)
-			$currentDir + "\Tool\QuickLookTools\export-offline-eventlogs.ps1" | Should -Exist
+			$currentDir + "\Tool\QuickLookTools\FilterEventLogs.ps1" | Should -Exist
 			$currentDir + "\Tool\QuickLookTools\export-offline-registry.ps1" | Should -Exist
 		}
 		It 'SuperCAT main file checks' {
