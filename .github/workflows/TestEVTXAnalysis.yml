@@ -22,7 +22,7 @@ jobs:
 
       # Get the EVTX repo and collect all the EVTX files in the repo into a single folder (I do not know how to do this)
       - name: Get EVTX repo
-      # - uses: sbousseaden/EVTX-ATTACK-SAMPLES@latest
+      - uses: sbousseaden/EVTX-ATTACK-SAMPLES@latest
 
       # Check that we got all the files we expected
       - name: List Files
