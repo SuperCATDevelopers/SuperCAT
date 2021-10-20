@@ -7,6 +7,14 @@ on:
       - '**.ps1'
       - '!tests/**'
   pull_request:
+      branches:
+        - main
+      paths:
+      - '**.ps1'
+      - '!tests/**'
+  
+  workflow_dispatch:
+  
 jobs:
   lint:
     name: Run PSSA
