@@ -92,7 +92,7 @@ while(!($LocationCheck -eq 1)){
 }
 
 
-$Output = [ordered]@{
+[ordered]@{
     BaseName = $Base
     System1 = $System1
     System2 = $System2
