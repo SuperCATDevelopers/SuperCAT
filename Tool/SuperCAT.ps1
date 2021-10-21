@@ -32,14 +32,10 @@ $Location4    = $JSONConfig.Location4
 $Location5    = $JSONConfig.Location5
 
 $Drive        = (Get-Location).path
-$GatherLogs   = "$Drive\..\..\Outputs\GatheredLogs"
-    New-Item -ItemType Directory -Path "$GatherLogs" | Out-Null
-$AVLogs       = "$Drive\..\..\Outputs\AVLogs"
-	New-Item -ItemType Directory -Path "$AVLogs" | Out-Null
-$SCAPLogs     = "$Drive\..\..\Outputs\SCAPLogs"
-	New-Item -ItemType Directory -Path "$SCAPLogs" | Out-Null
-$EventLogs    = "$Drive\..\..\Outputs\EventLogs"
-	New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
+$GatherLogs   = "$Drive\..\GatheredLogs"
+$AVLogs       = "$Drive\..\AVLogs"
+$SCAPLogs     = "$Drive\..\SCAPLogs"
+$EventLogs    = "$Drive\..\EventLogs"
 
 $Date         = Get-Date -Format "yy-MM-dd"
 $Win32OS      = Get-WMIObject -Class Win32_OperatingSystem
@@ -54,7 +50,7 @@ $OSArch       = $Win32OS.OSArchitecture
 
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if(($currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) -eq $False){
-    Write-Warning "THIS SCRIPT WAS NOT RAN AS ADMINISTRATOR! SOME TASKS MAY NOT WORK OR PROVIDE INACCURATE RESULTS!"
+    Write-Warning "THIS SCRIPT WAS NOT RUN AS AN ADMINISTRATOR! SOME TASKS MAY NOT WORK OR PROVIDE INACCURATE RESULTS!"
 }
 
 ###########################################################################################################
@@ -160,6 +156,7 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     3 = $System3
     4 = $System4
     5 = $System5
+    6 = Other (I will type it in)
     ==============================================================="
     $System = Read-Host
 
@@ -181,6 +178,11 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     }
     elseif($System -eq 5){
         Add-Content -value "System: $System5" -Path "$GatherLogs\$ComputerName-Info.txt"
+    }
+    elseif($Location -eq 6){
+        Write-Output "Type in the System and press Enter"
+        $Location6 = Read-Host
+        Add-Content -value "Location: $System6" -Path "$GatherLogs\$ComputerName-Info.txt"
     }
 
     ## Based on what is in the JSON file, it asks for the location of the machine (or you can write it in).
@@ -303,7 +305,7 @@ if((($Choices -Contains 4) -or ($Choices -Contains 6)) -and ($Choices -NotContai
 
 if((($Choices -Contains 5) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
     # Attempts to copy the Windows event logs to the disc for further analysis later.
-    #New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
+    New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
     Write-Output "Exporting Windows event logs to .evtx..."
     
     wevtutil.exe epl System "$EventLogs\$ComputerName-System.evtx"
