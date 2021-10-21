@@ -32,10 +32,14 @@ $Location4    = $JSONConfig.Location4
 $Location5    = $JSONConfig.Location5
 
 $Drive        = (Get-Location).path
-$GatherLogs   = "$Drive\..\GatheredLogs"
-$AVLogs       = "$Drive\..\AVLogs"
-$SCAPLogs     = "$Drive\..\SCAPLogs"
-$EventLogs    = "$Drive\..\EventLogs"
+$GatherLogs   = "$Drive\..\..\Outputs\GatheredLogs"
+    New-Item -ItemType Directory -Path "$GatherLogs" | Out-Null
+$AVLogs       = "$Drive\..\..\Outputs\AVLogs"
+	New-Item -ItemType Directory -Path "$AVLogs" | Out-Null
+$SCAPLogs     = "$Drive\..\..\Outputs\SCAPLogs"
+	New-Item -ItemType Directory -Path "$SCAPLogs" | Out-Null
+$EventLogs    = "$Drive\..\..\Outputs\EventLogs"
+	New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
 
 $Date         = Get-Date -Format "yy-MM-dd"
 $Win32OS      = Get-WMIObject -Class Win32_OperatingSystem
@@ -299,7 +303,7 @@ if((($Choices -Contains 4) -or ($Choices -Contains 6)) -and ($Choices -NotContai
 
 if((($Choices -Contains 5) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
     # Attempts to copy the Windows event logs to the disc for further analysis later.
-    New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
+    #New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
     Write-Output "Exporting Windows event logs to .evtx..."
     
     wevtutil.exe epl System "$EventLogs\$ComputerName-System.evtx"
