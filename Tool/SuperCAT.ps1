@@ -5,19 +5,6 @@
 param ([string] $Choices, $System, $Location)
 Clear-Host
 
-Write-Output $PSBoundParameters
-if($PSBoundParameters.ContainsKey("Choices")){
-    Write-Output $PSBoundParameters.Choices
-}
-if($PSBoundParameters.ContainsKey("System")){
-    Write-Output $PSBoundParameters.System
-}
-if($PSBoundParameters.ContainsKey("Location")){
-    Write-Output $PSBoundParameters.Location
-}
-
-exit
-
 ###########################################################################################################
 ## This section loads a JSON file that has configurations already pre-set. See setup-powershell.ps1
 ## for additional information. After that, it grabs additional information.
@@ -87,7 +74,13 @@ commas (i.e. 1,3,4,5):
 
 7 = Exit Program
 ==============================================================="
-$Choices = Read-Host
+if($PSBoundParameters.ContainsKey("Choices")){
+    $Choices = $PSBoundParameters.Choices
+    Write-Output $Choices
+}
+else{
+    $Choices = Read-Host
+}
 
 while($Choices -notmatch "^[0-7,]*$"){
     $Choices = Read-Host "Please only input numbers 0 to 7 and commas (i.e. 1,3,5)"
@@ -110,7 +103,7 @@ if(($Choices -Contains 0) -and ($Choices -NotContains 7)){
 
     if($InstalledDAT -lt $CATDAT){
         Write-Output "Installing new DAT Signatures..."
-        
+
         & "$Drive\AV\DAT\$CATDATName" /SILENT /F
     }
     else{
@@ -155,11 +148,11 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     Add-Content -Value "Operating System Version: $OSVer" -Path "$GatherLogs\$ComputerName-Info.txt"
     Add-Content -Value "Base: $BaseName" -Path "$GatherLogs\$ComputerName-Info.txt"
     Add-Content -Value "MAC Address: $MACAddress" -Path "$GatherLogs\$ComputerName-Info.txt"
-    
+
     $HardDrives | Export-CSV -Path "$GatherLogs\$ComputerName-HardDrives.csv" -NoTypeInformation
-    
+
     Write-Output "Writing hard drive information..."
-    
+
     ## Based on what is in the JSON file, it writes the System names and asks the user which system
     ## the machine belongs to. Then, it writes it to file.
     Write-Output "
@@ -171,12 +164,16 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     4 = $System4
     5 = $System5
     ==============================================================="
-    $System = Read-Host
-
+    if($PSBoundParameters.ContainsKey("System")){
+        $System = $PSBoundParameters.System
+    }
+    else{
+        $System = Read-Host
+    }
     while($System -notmatch "^[1-5]$"){
         $System = Read-Host "You must input a number between 1 and 5."
     }
-    
+
     if($System -eq 1){
         Add-Content -value "System: $System1" -Path "$GatherLogs\$ComputerName-Info.txt"
     }
@@ -204,7 +201,13 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     5 = $Location5
     6 = Other (I will type it in)
     ==============================================================="
-    $Location = Read-Host
+
+    if($PSBoundParameters.ContainsKey("Location")){
+        $Location = $PSBoundParameters.Location
+    }
+    else{
+        $Location = Read-Host
+    }
 
     while($System -notmatch "^[1-6]$"){
         $Location = Read-Host "You must input a number between 1 and 6."
@@ -315,7 +318,7 @@ if((($Choices -Contains 5) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     # Attempts to copy the Windows event logs to the disc for further analysis later.
     New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
     Write-Output "Exporting Windows event logs to .evtx..."
-    
+
     wevtutil.exe epl System "$EventLogs\$ComputerName-System.evtx"
     wevtutil.exe epl Security "$EventLogs\$ComputerName-Security.evtx"
     wevtutil.exe epl Application "$EventLogs\$ComputerName-Application.evtx"
