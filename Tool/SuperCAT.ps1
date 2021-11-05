@@ -2,7 +2,21 @@
 ## SUPERCAT (CYBER ASSESSMENT TOOL) V2.20
 ## DEVELOPED BY: SSGT CLINTON REEL // CLINTON.REEL@US.AF.MIL
 ###########################################################################################################>
+param ([string] $Choices, $System, $Location)
 Clear-Host
+
+Write-Output $PSBoundParameters
+if($PSBoundParameters.ContainsKey("Choices")){
+    Write-Output $PSBoundParameters.Choices
+}
+if($PSBoundParameters.ContainsKey("System")){
+    Write-Output $PSBoundParameters.System
+}
+if($PSBoundParameters.ContainsKey("Location")){
+    Write-Output $PSBoundParameters.Location
+}
+
+exit
 
 ###########################################################################################################
 ## This section loads a JSON file that has configurations already pre-set. See setup-powershell.ps1
