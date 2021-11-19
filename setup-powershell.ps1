@@ -8,6 +8,33 @@ the file or you can use this script again to create it.
 ==============================================================="
 pause
 
+$configFileExists = Test-Path -Path Tool/config.json -PathType Leaf
+
+If($configFileExists) {
+    Write-Output "
+    ===============================================================
+    Configuration already exists at .Tool\config.json
+    Continuing will overwrite the current configuration.
+    Do you want to continue?
+    1 = Yes
+    2 = No
+    ==============================================================="
+    $overwriteConfig = Read-Host
+
+    while($overwriteConfig -notmatch "^[1-2]$"){
+        $overwriteConfig = Read-Host "You must input either 1 or 2."
+    }
+
+    if($overwriteConfig -eq 2){
+        # Cleans up the disc of files no longer required.
+        Write-Output "Exiting..."
+        exit
+    }
+}
+
+
+
+
 while(!($Basecheck -eq 1)){
     $Base = Read-Host "Type in the name of your base"
 
@@ -65,7 +92,7 @@ while(!($LocationCheck -eq 1)){
 }
 
 
-$Output = @{
+[ordered]@{
     BaseName = $Base
     System1 = $System1
     System2 = $System2
@@ -79,4 +106,9 @@ $Output = @{
     Location5 = $Location5
 } | ConvertTo-JSON | Set-Content -Path "Tool/config.json"
 
-Write-Output "config.json has been created!"
+Get-Content Tool/config.json
+
+Write-Output "
+===============================================================
+config.json has been created!
+==============================================================="

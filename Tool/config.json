@@ -1,13 +1,13 @@
 {
+    "BaseName":  "Undefined",
+    "System1":  "Undefined",    
+    "System2":  "Undefined",
     "System3":  "Undefined",
     "System4":  "Undefined",
-    "System1":  "VIPER/CAPRE",
-    "System2":  "Undefined",
-    "Location5":  "Undefined",
-    "Location4":  "Undefined",
     "System5":  "Undefined",
-    "Location3":  "Undefined",
-    "Location2":  "Undefined",
-    "BaseName":  null,
-    "Location1":  "Building 1109"
+    "Location1":  "Building #",
+    "Location2":  "Building #",
+    "Location3":  "Building #",
+    "Location4":  "Building #",
+    "Location5":  "Building #"  
 }

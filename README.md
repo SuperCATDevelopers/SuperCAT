@@ -60,12 +60,16 @@ After you have selected your option it will begin the process.  There will be a 
 ***    Results and Info       ******
 ************************************
 
-Once it is completed the DVD will contain CSV files with the necessary information for each system.
+Once it is completed the CD/DVD will contain files with the extracted information for each system within the Outputs folder.
 
 
+************************************
+***   Event ID Analysis          ***
+************************************
 
-
-
+SuperCAT gets an extract of Windows Event logs and stores them as raw EVTX files. These can be injested directly with logstash. In addition, within the Tools\QuicklookTools folder is a tool (FilterEventLogs.ps1) for parsing the evtx files and converting them to csv files.  The user can supply a txt file of EventIDs for which to filter the CSV and it will output an analysis file with the EventIDs the user is interested in.
+The user can get a good list of EventIDs to use for Incident Response, Threat Hunting, Forensics, etc at the following location:
+https://github.com/TonyPhipps/SIEM/blob/ec2dde7ba7997bfb9a88acf27fbb1fde7e32d20c/Notable-Event-IDs.md
 
 
 
