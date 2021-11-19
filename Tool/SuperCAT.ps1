@@ -2,7 +2,12 @@
 ## SUPERCAT (CYBER ASSESSMENT TOOL) V2.20
 ## DEVELOPED BY: SSGT CLINTON REEL // CLINTON.REEL@US.AF.MIL
 ###########################################################################################################>
-param ([string] $Choices, $System, $Location)
+param (
+    [string] $Choices, 
+    [string] $System, 
+    [string] $Location,
+    [switch] $Confirm
+)
 Clear-Host
 
 ###########################################################################################################
@@ -131,12 +136,18 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     2 = I'll type it myself.
     ==============================================================="
 
-    $SerialCheck = Read-Host
-    while($SerialCheck -notmatch "^[1-2]$"){
-        $SerialCheck = Read-Host "You must input either 1 or 2."
+    if ($Confirm.IsPresent){
+        $SerialCheck = "1"
+        Write-Output $SerialCheck
     }
-    if($SerialCheck -eq 2){
-        $SerialNumber = Read-Host "Type the serial number you wish to input, then press Enter"
+    else{
+        $SerialCheck = Read-Host
+        while($SerialCheck -notmatch "^[1-2]$"){
+            $SerialCheck = Read-Host "You must input either 1 or 2."
+        }
+        if($SerialCheck -eq 2){
+            $SerialNumber = Read-Host "Type the serial number you wish to input, then press Enter"
+        }
     }
 
     ## Adds the generic information about the machine to a file.
@@ -348,10 +359,16 @@ if ($Choices -match "^[1-6]$"){
     1 = Yes
     2 = No
     ==============================================================="
-    $RemoveExtras = Read-Host
+    if ($Confirm.IsPresent){
+        $RemoveExtras = "2"
+        Write-Output $RemoveExtras
+    }
+    else{
+        $RemoveExtras = Read-Host
 
-    while($RemoveExtras -notmatch "^[1-2]$"){
-        $RemoveExtras = Read-Host "You must input either 1 or 2."
+        while($RemoveExtras -notmatch "^[1-2]$"){
+            $RemoveExtras = Read-Host "You must input either 1 or 2."
+        }
     }
 
     if($RemoveExtras -eq 1){
