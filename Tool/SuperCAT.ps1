@@ -393,4 +393,6 @@ if ($Choices -match "^[1-6]$"){
 }
 
 Write-Output "Done!"
-pause
+if (!$Confirm.IsPresent){
+    pause
+}
