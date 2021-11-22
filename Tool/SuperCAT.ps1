@@ -128,7 +128,7 @@ if(($Choices -Contains 0) -and ($Choices -NotContains 7)){
 if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
     $SerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber
     $MACAddress   = (Get-WMIObject -Class Win32_NetworkAdapter | Where-Object {$Null -ne $_.MACaddress} | Select-Object -First 1).MACAddress
-    $HardDrives   = Get-PhysicalDisk | Select-Object FriendlyName,Model,MediaType,BusType,HealthStatus,OperationalStatus,Usage,Size
+    $HardDrives   = Get-PhysicalDisk | Select-Object FriendlyName,Model,SerialNumber,MediaType,BusType,HealthStatus,OperationalStatus,Usage,Size
     $OSName       = $Win32OS.Caption
     $OSVer        = $Win32OS.Version
 
