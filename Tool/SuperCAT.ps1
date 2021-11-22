@@ -186,8 +186,8 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     else{
         $System = Read-Host
     }
-    while($System -notmatch "^[1-5]$"){
-        $System = Read-Host "You must input a number between 1 and 5."
+    while($System -notmatch "^[1-6]$"){
+        $System = Read-Host "You must input a number between 1 and 6."
     }
 
     if($System -eq 1){
