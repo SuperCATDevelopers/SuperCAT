@@ -5,6 +5,10 @@ This is a README file to provide instructions on how to operate the SuperCat too
 [![Pester](https://github.com/lordneeko/SuperCAT/actions/workflows/PesterTest.yml/badge.svg)](https://github.com/lordneeko/SuperCAT/actions/workflows/PesterTest.yml)
 [![PSScriptAnalyzer](https://github.com/SuperCATDevelopers/SuperCAT/actions/workflows/PSScriptAnalyzer.yml/badge.svg?branch=main)](https://github.com/SuperCATDevelopers/SuperCAT/actions/workflows/PSScriptAnalyzer.yml)
 
+**********************************
+*SuperCat Concept of Operation*
+**********************************
+The primary function of the SuperCAT tool is to scan offline systems to gather metadata and audit logs on those systems.  In particular, SuperCAT has been designed to execute solely from a CD/DVD disc so that the configuration baseline of the scanned system is not affected. SuperCAT's command execute from the disc and write back to the disc.  Although Windows will load the PowerShell scripts (and executables) into memory while running, no files are expected to remain resident on the system after the test completes.  Once the scan is complete, the user should use the built in CD/DVD burner utilizies to write the added files back to the disc and "finalize" the disc using a manner in accordance with prescribed policies.
 
 **********************************
 *Preparation of the SuperCat Tool*
@@ -13,14 +17,20 @@ This is a README file to provide instructions on how to operate the SuperCat too
 After you have downloaded the SuperCat Tool you will need to populate the other tools onto the disc to ensure you have the latest versions.
 
 For the Anti-Virus Definition Files to be updated get the latest DAT file for DOD Patch Repository under the ESS Collection. https://patches.csd.disa.mil/CollectionInfo.aspx?id=863&bc=394_1_15_asc
+* DAT files are places in the .\Tool\AV\DAT folder
 
-This file will be placed in the [folder] 
+SuperCAT normally relies on the McAfee VirusScan Command Line scanner (VSCL) to operate. 
+* DOD Users may obtain a copy of this at the [DOD Patch Repository](https://patches.csd.disa.mil) by searching for VSCL Windows 
+* Non-DOD, for information on obtaining this from McAfee is located here: https://kc.mcafee.com/corporate/index?page=content&id=KB5114
+* VSCL is placed in the .\Tool\AV\w64 folder
+** Note: Currently, a 32-bit scanner has not been identified. DOD Patch Repo no longer provides the 32 bit scanner.
 
 For the latest SCAP Compliance Checker (SCC) you can obtain that tool on DoD Cyber Exchange.  https://cyber.mil/stigs/scap/
+* Place SCC files within the .\Tool\DISA directoy
 
-This file will be placed in the [folder].
+For users which want to scan older systems, you must download and install SCAP content for those systems to the SCC by following the User's Manual provided within the SCC download.  For those scanning current systems (e.g. Windows 10), SCC already contains the latest SCAP content.
 
-Once the scripts and files have been placed on the DVD, you can complete the burning process of the DVD to take to the System(s) under test.
+Once the scripts and files have been placed on the CD/DVD, you can complete the burning process of the CD/DVD to take to the System(s) under test. Be sure when adding the tool to the disc, that you do not "finalize" the session to ensure that when the tests are executed Windows can add the files back to the disc.
 
 
 *********************************
@@ -52,7 +62,8 @@ Select the SuperCAT script to run.
 
 The first menu to appear will allow you to select specific item to run or you can run all of them.
 
-After you have selected your option it will begin the process.  There will be a prompt that tells you where it is in the process.  Please wait till you see the Done before attempting to eject the DVD.
+After you have selected your option it will begin the process.  There will be a prompt that tells you where it is in the process. It is recommended that the user "finalize" the disc before attempting to eject the DVD.
+**Note: Depending on the security requirements of the System Owner, you may need to use a separate disc each time you scan a system to avoid the chance of intermingling data or transferring malware.**
 
 
 
