@@ -2,6 +2,12 @@
 ## SUPERCAT (CYBER ASSESSMENT TOOL) V2.20
 ## DEVELOPED BY: SSGT CLINTON REEL // CLINTON.REEL@US.AF.MIL
 ###########################################################################################################>
+param (
+    [string] $Choices, 
+    [string] $System, 
+    [string] $Location,
+    [switch] $Confirm
+)
 Clear-Host
 
 ###########################################################################################################
@@ -77,7 +83,13 @@ commas (i.e. 1,3,4,5):
 
 7 = Exit Program
 ==============================================================="
-$Choices = Read-Host
+if($PSBoundParameters.ContainsKey("Choices")){
+    $Choices = $PSBoundParameters.Choices
+    Write-Output $Choices
+}
+else{
+    $Choices = Read-Host
+}
 
 while($Choices -notmatch "^[0-7,]*$"){
     $Choices = Read-Host "Please only input numbers 0 to 7 and commas (i.e. 1,3,5)"
@@ -99,7 +111,9 @@ if(($Choices -Contains 0) -and ($Choices -NotContains 7)){
     $CATDATName   = (Get-Childitem "$Drive\AV\DAT\CM*").Name
 
     if($InstalledDAT -lt $CATDAT){
-        Write-Output "Installing new DAT Signatures..." & "$Drive\AV\DAT\$CATDATName" /SILENT /F
+        Write-Output "Installing new DAT Signatures..."
+
+        & "$Drive\AV\DAT\$CATDATName" /SILENT /F
     }
     else{
         Write-Output "Installed DAT files are more up-to-date than what is on the disc."
@@ -114,7 +128,7 @@ if(($Choices -Contains 0) -and ($Choices -NotContains 7)){
 if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
     $SerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber
     $MACAddress   = (Get-WMIObject -Class Win32_NetworkAdapter | Where-Object {$Null -ne $_.MACaddress} | Select-Object -First 1).MACAddress
-    $HardDrives   = Get-PhysicalDisk | Select-Object FriendlyName,Model,MediaType,BusType,HealthStatus,OperationalStatus,Usage,Size
+    $HardDrives   = Get-PhysicalDisk | Select-Object FriendlyName,Model,SerialNumber,MediaType,BusType,HealthStatus,OperationalStatus,Usage,Size
     $OSName       = $Win32OS.Caption
     $OSVer        = $Win32OS.Version
 
@@ -126,12 +140,18 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     2 = I'll type it myself.
     ==============================================================="
 
-    $SerialCheck = Read-Host
-    while($SerialCheck -notmatch "^[1-2]$"){
-        $SerialCheck = Read-Host "You must input either 1 or 2."
+    if ($Confirm.IsPresent){
+        $SerialCheck = "1"
+        Write-Output $SerialCheck
     }
-    if($SerialCheck -eq 2){
-        $SerialNumber = Read-Host "Type the serial number you wish to input, then press Enter"
+    else{
+        $SerialCheck = Read-Host
+        while($SerialCheck -notmatch "^[1-2]$"){
+            $SerialCheck = Read-Host "You must input either 1 or 2."
+        }
+        if($SerialCheck -eq 2){
+            $SerialNumber = Read-Host "Type the serial number you wish to input, then press Enter"
+        }
     }
 
     ## Adds the generic information about the machine to a file.
@@ -160,10 +180,14 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     5 = $System5
     6 = Other (I will type it in)
     ==============================================================="
-    $System = Read-Host
-
-    while($System -notmatch "^[1-5]$"){
-        $System = Read-Host "You must input a number between 1 and 5."
+    if($PSBoundParameters.ContainsKey("System")){
+        $System = $PSBoundParameters.System
+    }
+    else{
+        $System = Read-Host
+    }
+    while($System -notmatch "^[1-6]$"){
+        $System = Read-Host "You must input a number between 1 and 6."
     }
 
     if($System -eq 1){
@@ -198,7 +222,13 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     5 = $Location5
     6 = Other (I will type it in)
     ==============================================================="
-    $Location = Read-Host
+
+    if($PSBoundParameters.ContainsKey("Location")){
+        $Location = $PSBoundParameters.Location
+    }
+    else{
+        $Location = Read-Host
+    }
 
     while($System -notmatch "^[1-6]$"){
         $Location = Read-Host "You must input a number between 1 and 6."
@@ -339,10 +369,16 @@ if ($Choices -match "^[1-6]$"){
     1 = Yes
     2 = No
     ==============================================================="
-    $RemoveExtras = Read-Host
+    if ($Confirm.IsPresent){
+        $RemoveExtras = "2"
+        Write-Output $RemoveExtras
+    }
+    else{
+        $RemoveExtras = Read-Host
 
-    while($RemoveExtras -notmatch "^[1-2]$"){
-        $RemoveExtras = Read-Host "You must input either 1 or 2."
+        while($RemoveExtras -notmatch "^[1-2]$"){
+            $RemoveExtras = Read-Host "You must input either 1 or 2."
+        }
     }
 
     if($RemoveExtras -eq 1){
@@ -357,4 +393,6 @@ if ($Choices -match "^[1-6]$"){
 }
 
 Write-Output "Done!"
-pause
+if (!$Confirm.IsPresent){
+    pause
+}
