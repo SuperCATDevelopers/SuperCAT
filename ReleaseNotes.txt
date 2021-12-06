@@ -25,3 +25,14 @@ v2.20
 - Fixed an issue where Move-Item commands mistakenly had -Recurse as a parameter.
 - Changed/simplified save location of exported/collected files; will now appear above the directory above where the script is ran.
 - Changed the $ComputerName_$SerialNumber.txt file holding basic user input to $ComputerName-Info.txt
+
+v3.0.0
+- BREAKING CHANGE Switched configuration file to XML for better object handling.
+- BREAKING CHANGE Regressed #42 Commandline arguments; pending reimplementation.
+- Rewrote script to utilize functions and modules.
+- Moved configuration generation into SuperCAT.ps1.
+- Added UI framework.
+- Implemented #50 .gitignore for config.xml
+- Provided for accurate-ish datetime on systems with dead a CMOS battery.
+- Moved towards compliance with Semantic Versioning 2.0.0 https://semver.org/
+

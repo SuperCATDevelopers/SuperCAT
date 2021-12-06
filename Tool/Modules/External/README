@@ -1,0 +1,1 @@
+This folder is for modules developed externally. Items are organized by what in the Cyber Kill Chain is detected; many will fall under more than one. Use your best judgement to determine where to place items. The support folder is for modules solely providing capability to SuperCAT, not detection functions; think graphics libraries and such.
