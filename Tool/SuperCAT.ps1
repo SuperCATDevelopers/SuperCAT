@@ -51,6 +51,7 @@ $Date         = Get-Date -Format "yy-MM-dd"
 $Win32OS      = Get-WMIObject -Class Win32_OperatingSystem
 $ComputerName = $Win32OS.PSComputerName
 $OSArch       = $Win32OS.OSArchitecture
+$PSVersion    = Get-Host | Select-Object Version
 ###########################################################################################################
 
 ###########################################################################################################
@@ -157,6 +158,7 @@ if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContai
     ## Adds the generic information about the machine to a file.
     Write-Output "Writing computer name, serial number, and base info..."
     Add-Content -Value "Date: $Date" -Path "$GatherLogs\$ComputerName-Info.txt"
+    Add-Content -Value "PowerShell Version: $PSVersion" -Path "$GatherLogs\$ComputerName-Info.txt"
     Add-Content -Value "Serial Number: $SerialNumber" -Path "$GatherLogs\$ComputerName-Info.txt"
     Add-Content -Value "Computer Name: $ComputerName" -Path "$GatherLogs\$ComputerName-Info.txt"
     Add-Content -Value "Operating System: $OSName" -Path "$GatherLogs\$ComputerName-Info.txt"
