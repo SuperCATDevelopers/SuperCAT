@@ -8,8 +8,8 @@ function Get-TimeDelta {
         [Parameter()]
         [switch]$NoPrompt
     )
+    if ($Trust) { return New-TimeSpan }
     if (!$NoPrompt) {
-        if ($Trust) { return New-TimeSpan }
         Write-Host "Is the CMOS battery good and the time accurate?"
         if ($(Read-Intent -TF)) { return New-TimeSpan }
     }
@@ -35,7 +35,12 @@ function Get-ActualDate {
         return (Get-Date)
     }
     else {
-        return (Get-Date) + $UserTime
+    	try {
+        	return (Get-Date) + $UserTime
+	}
+	catch {
+		return (Get-Date) ## Blank dates confuse Win 7.
+	}
     }
 }
 

@@ -10,7 +10,7 @@
 
 $ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
 
-Import-Module "$ScriptDirectory\Internal\Support\support.psm1"
+Import-Module "$ScriptDirectory\Modules\Internal\Support\support.psm1"
 
 ######################### Function Declaration #################################
 
@@ -66,7 +66,7 @@ function Update-Config {
     $Config.LastAccessTimeUTC = Get-ActualDate
     if ( $Config.KnownDrives.Keys -NotContains $LocalDrive ) {
         Write-Host "Unknown drive. Would you like to add this `ndrive to the database?"
-        if ( $(Read-Intent -TF) ) {
+        if ( !$(Read-Intent -TF) ) {
             Write-Host
             Write-Host "Exiting! Nothing has been written."
             exit
@@ -191,7 +191,7 @@ function Import-Identifiers ([PSCustomObject]$Config,[String]$Directory) {      
       Select-Object -First 1).MACAddress
 
     ## Adds the generic information about the machine to a file.
-    Write-Information "Writing computer name, serial number, and base info..."
+    Write-Output "Writing computer name, serial number, and base info..."
     Add-Content -Value "Date: $(Get-Date -Date $(Get-ActualDate) -Format "yy-MM-dd")" -Path $LogPath
     Add-Content -Value "Serial Number: $SerialNumber" -Path $LogPath
     Add-Content -Value "Computer Name: $ComputerName" -Path $LogPath
