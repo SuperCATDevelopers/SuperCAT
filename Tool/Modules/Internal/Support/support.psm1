@@ -37,10 +37,10 @@ function Get-ActualDate {
     else {
     	try {
         	return (Get-Date) + $UserTime
-	}
-	catch {
-		return (Get-Date) ## Blank dates confuse Win 7.
-	}
+    	}
+    	catch {
+    		return (Get-Date) ## Blank dates confuse Win 7.
+    	}
     }
 }
 
@@ -86,7 +86,7 @@ function Read-Intent {
     ## Present Options to User
     Clear-Host
     Write-Host "================================================"
-    if ( $Null -eq $Prompt ) {
+    if ( $Null -eq $Prompt ) {  ##TODO: Win7 doesn't handle null correctly
         Write-Host $Prompt
         Write-Host
     }

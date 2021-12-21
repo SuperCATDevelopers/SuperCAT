@@ -60,9 +60,34 @@ function Update-Config {
         [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
         [PSCustomObject]$Config
     )
-    # $LocalDrive = (Get-WMIObject Win32_PhysicalMedia |
-    #   Where-Object {$_.Tag -eq "\\.\PHYSICALDRIVE0"}).SerialNumber
-    $LocalDrive = "d2f2e6e7-ff28-448f-9e84-500fa53abe0d" ## Temporary for developing on linux. You shouldn't see this.
+    function Read-SystemType {      ## TODO: Replace w/ autopull when developed
+        $SelectionArray = @(
+            "CAPRE",
+            "VIPER",
+            "Other"
+        )
+        switch ($(Read-Intent $SelectionArray "What type of system is this?")) {
+            $SelectionArray[0] { return $SelectionArray[0] }
+            $SelectionArray[1] { return $SelectionArray[1] }
+            $SelectionArray[2] { return $(Read-Host -Propmpt "What type of system is this") }
+        }
+    }
+    function Read-Classification {      ## TODO: Replace w/ autopull when developed
+        $SelectionArray = @(
+            "Unclassified",
+            "Classified",
+            "Top Secret",
+            "Other"
+        )
+        switch ($(Read-Intent $SelectionArray "What is the classification?")) {
+            $SelectionArray[0] { return $SelectionArray[0] }
+            $SelectionArray[1] { return $SelectionArray[1] }
+            $SelectionArray[2] { return $SelectionArray[2] }
+            $SelectionArray[3] { return $(Read-Host -Propmpt "What is the classification") }
+        }
+    }
+    $LocalDrive = (Get-WMIObject Win32_PhysicalMedia |
+      Where-Object {$_.Tag -eq "\\.\PHYSICALDRIVE0"}).SerialNumber
     $Config.LastAccessTimeUTC = Get-ActualDate
     if ( $Config.KnownDrives.Keys -NotContains $LocalDrive ) {
         Write-Host "Unknown drive. Would you like to add this `ndrive to the database?"
@@ -78,9 +103,9 @@ function Update-Config {
             LastAccessTimeUTC   = Get-ActualDate
             LastWriteTimeUTC    = Get-ActualDate
             DriveName			= Read-Host -Prompt "What is this HDD called"
-            SystemType			= Read-Host -Prompt "What type of system is this"       ## TODO: Autopull from filesystem; may be function; select from list for now
+            SystemType			= Read-SystemType
             Unit				= Read-Host -Prompt "What unit does this HDD belong to"
-            Classification		= Read-Host -Prompt "What is the classification"        ## TODO: Autopull from registry
+            Classification		= Read-Classification
         }
         Write-Host
         Write-Host "Complete!"
@@ -111,9 +136,9 @@ function Update-Config {
             $SelectionArray[0] {$Config.BaseName                                 = Read-Host -Prompt "Base Name"}
             $SelectionArray[1] {$Config.ScanningOrg                              = Read-Host -Prompt "Organization"}
             $SelectionArray[2] {$Config.KnownDrives[$LocalDrive].DriveName       = Read-Host -Prompt "Drive Name"}
-            $SelectionArray[3] {$Config.KnownDrives[$LocalDrive].SystemType      = Read-Host -Prompt "System Type"}
+            $SelectionArray[3] {$Config.KnownDrives[$LocalDrive].SystemType      = Read-SystemType}
             $SelectionArray[4] {$Config.KnownDrives[$LocalDrive].Unit            = Read-Host -Prompt "Serviced Unit"}
-            $SelectionArray[5] {$Config.KnownDrives[$LocalDrive].Classification  = Read-Host -Prompt "Classification"}
+            $SelectionArray[5] {$Config.KnownDrives[$LocalDrive].Classification  = Read-Classification}
 
             Default {throw "Update-Config -> if known drive -> switch fell through."}
         }
