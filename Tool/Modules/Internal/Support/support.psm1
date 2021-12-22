@@ -10,6 +10,7 @@ function Get-TimeDelta {
     )
     if ($Trust) { return New-TimeSpan }
     if (!$NoPrompt) {
+        Write-Host "The current time is $([datetime]::now.ToUniversalTime().tostring("s")) UTC"
         Write-Host "Is the CMOS battery good and the time accurate?"
         if ($(Read-Intent -TF)) { return New-TimeSpan }
     }
@@ -23,6 +24,7 @@ function Get-TimeDelta {
         return Get-TimeDelta -NoPrompt
     }
 }
+Export-ModuleMember -Function Get-TimeDelta
 
 function Get-ActualDate {
     # .SYNOPSIS
@@ -32,17 +34,18 @@ function Get-ActualDate {
         [switch]$Trust
     )
     if ($Trust) {
-        return (Get-Date)
+        return ([datetime]::now.ToUniversalTime().tostring("s"))
     }
     else {
     	try {
-        	return (Get-Date) + $UserTime
+        	return ([datetime]::now.ToUniversalTime().tostring("s")) + $UserTime
     	}
     	catch {
-    		return (Get-Date) ## Blank dates confuse Win 7.
+    		return ([datetime]::now.ToUniversalTime().tostring("s")) ## Blank dates confuse Win 7.
     	}
     }
 }
+Export-ModuleMember -Function Get-ActualDate
 
 function Read-Intent {
     # .SYNOPSIS
@@ -84,11 +87,10 @@ function Read-Intent {
     $OptionArray = $([array]($Options))
 
     ## Present Options to User
-    Clear-Host
+    #  Clear-Host
     Write-Host "================================================"
-    if ( $Null -eq $Prompt ) {  ##TODO: Win7 doesn't handle null correctly
+    if ( $Null -ne $PSBoundParameters.Prompt ) {
         Write-Host $Prompt
-        Write-Host
     }
     if ($Multiple) {
         Write-Host "Input only numbers and commas (i.e. 1,3,4,5):"
@@ -114,7 +116,7 @@ function Read-Intent {
                 Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count - 1)"
             }
             else {
-                return $OptionArray[$ResultList] ## You can use an array to select items in an array. Handy!
+                return $OptionArray[$ResultList]
             }
         }
     }
@@ -132,4 +134,15 @@ function Read-Intent {
             }
         }
     }
+}
+Export-ModuleMember -Function Read-Intent
+
+Try {
+    Get-Command pause -ErrorAction Stop | Out-Null
+}
+Catch {
+    function pause {
+        Read-Host -Prompt "Press enter to continue" | Out-Null
+    }
+    Export-ModuleMember -Function pause
 }
