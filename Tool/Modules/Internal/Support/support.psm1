@@ -37,12 +37,12 @@ function Get-ActualDate {
         return ([datetime]::now.ToUniversalTime().tostring("s"))
     }
     else {
-    	try {
-        	return ([datetime]::now.ToUniversalTime().tostring("s")) + $UserTime
-    	}
-    	catch {
-    		return ([datetime]::now.ToUniversalTime().tostring("s")) ## Blank dates confuse Win 7.
-    	}
+        try {
+            return ([datetime]::now.ToUniversalTime().tostring("s")) + $UserTime
+        }
+        catch {
+            return ([datetime]::now.ToUniversalTime().tostring("s")) ## Blank dates confuse Win 7.
+        }
     }
 }
 Export-ModuleMember -Function Get-ActualDate

@@ -76,7 +76,8 @@ function Update-Config {
     function Read-Classification {      ## TODO: Replace w/ autopull when developed
         $SelectionArray = @(
             "Unclassified",
-            "Classified",
+            "Confidential",
+            "Secret",
             "Top Secret",
             "Other"
         )
@@ -84,7 +85,8 @@ function Update-Config {
             $SelectionArray[0] { return $SelectionArray[0] }
             $SelectionArray[1] { return $SelectionArray[1] }
             $SelectionArray[2] { return $SelectionArray[2] }
-            $SelectionArray[3] { return $(Read-Host -Prompt "What is the classification") }
+            $SelectionArray[3] { return $SelectionArray[3] }
+            $SelectionArray[4] { return $(Read-Host -Prompt "What is the classification") }
         }
     }
     $LocalDrive = (Get-WMIObject Win32_PhysicalMedia |
@@ -103,10 +105,10 @@ function Update-Config {
             CreationTimeUTC     = Get-ActualDate
             LastAccessTimeUTC   = Get-ActualDate
             LastWriteTimeUTC    = Get-ActualDate
-            DriveName			= Read-Host -Prompt "What is this HDD called"
-            SystemType			= Read-SystemType
-            Unit				= Read-Host -Prompt "What unit does this HDD belong to"
-            Classification		= Read-Classification
+            DriveName           = Read-Host -Prompt "What is this HDD called"
+            SystemType          = Read-SystemType
+            Unit                = Read-Host -Prompt "What unit does this HDD belong to"
+            Classification      = Read-Classification
         }
         Write-Host
         Write-Host "Complete!"
@@ -336,15 +338,6 @@ function Import-EventLogs ([String]$LogPrefix) {
 
 ################################ General ######################################
 #  Clear-Host
-## Add pause functionailty if it doesn't exist
-Try {
-    Get-Command pause -ErrorAction Stop | Out-Null
-}
-Catch {
-    function pause {
-        Read-Host -Prompt "Press Enter to continue.." | Out-Null
-    }
-}
 
 ## Check for administrative privildges, warn in necessary, continue
 $isAdmin = ([Security.Principal.WindowsPrincipal](
