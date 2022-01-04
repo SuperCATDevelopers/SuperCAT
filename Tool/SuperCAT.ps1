@@ -43,9 +43,9 @@ function Import-Config {
         }
         return [PSCustomObject]@{
             ConfigVersion       = [System.Version]"2.0.0"
-            CreationTimeUTC     = Get-ActualDate
-            LastAccessTimeUTC   = Get-ActualDate
-            LastWriteTimeUTC    = Get-ActualDate
+            CreationTimeUTC     = Get-Date
+            LastAccessTimeUTC   = Get-Date
+            LastWriteTimeUTC    = Get-Date
             LastHDD             = ''
             BaseName            = Read-Host -Prompt "What installation is serviced by your organization"
             ScanningOrg         = Read-Host -Prompt "What is your organization"
@@ -91,7 +91,7 @@ function Update-Config {
     }
     $LocalDrive = (Get-WMIObject Win32_PhysicalMedia |
       Where-Object {$_.Tag -eq "\\.\PHYSICALDRIVE0"}).SerialNumber
-    $Config.LastAccessTimeUTC = Get-ActualDate
+    $Config.LastAccessTimeUTC = Get-Date
     if ( $Config.KnownDrives.Keys -NotContains $LocalDrive ) {
         Write-Host "Unknown drive. Would you like to add this `ndrive to the database?"
         if ( !$(Read-Intent -TF) ) {
@@ -102,9 +102,9 @@ function Update-Config {
         Write-Host "Adding drive to database."
         Write-Host
         $Config.KnownDrives.$LocalDrive = @{
-            CreationTimeUTC     = Get-ActualDate
-            LastAccessTimeUTC   = Get-ActualDate
-            LastWriteTimeUTC    = Get-ActualDate
+            CreationTimeUTC     = Get-Date
+            LastAccessTimeUTC   = Get-Date
+            LastWriteTimeUTC    = Get-Date
             DriveName           = Read-Host -Prompt "What is this HDD called"
             SystemType          = Read-SystemType
             Unit                = Read-Host -Prompt "What unit does this HDD belong to"
@@ -125,8 +125,8 @@ function Update-Config {
             Classification    = $($Config.KnownDrives.$LocalDrive.Classification)"
         Write-Host "Is this information correct?"
         if ($(Read-Intent -TF)) { break }
-        $Config.KnownDrives.$LocalDrive.LastWriteTimeUTC = Get-ActualDate
-        $Config.LastWriteTimeUTC = Get-ActualDate
+        $Config.KnownDrives.$LocalDrive.LastWriteTimeUTC = Get-Date
+        $Config.LastWriteTimeUTC = Get-Date
         $SelectionArray = @(
             "Base Name",
             "Organization",
@@ -147,7 +147,7 @@ function Update-Config {
         }
 
     }
-    $Config.KnownDrives.$LocalDrive.LastAccessTimeUTC = Get-ActualDate
+    $Config.KnownDrives.$LocalDrive.LastAccessTimeUTC = Get-Date
     $Config.LastHDD = $LocalDrive
     return $Config
 }
@@ -207,22 +207,19 @@ function Update-Signatures ([String]$RootDirectory) {
 function Import-Identifiers ([PSCustomObject]$Config,[String]$LogPrefix) {
     if (!$(Test-Path $($LogPrefix | Split-Path))) { New-Item -ItemType Directory -Path $($LogPrefix | Split-Path) | Out-Null }
     $Win32OS            = Get-WMIObject -Class Win32_OperatingSystem
-    $BaseName     = $Config.BaseName
-    $LogPath      = "$LogPrefix-Info.txt"
-    Write-Host $LogPath.gettype()
-    Write-Host $LogPath
-    $OSName       = $Win32OS.Caption
-    $OSVer        = $Win32OS.Version
-    $PSVersion    = Get-Host | Select-Object Version
-    ## TODO: Find a unique ID for the chasis
-    $ChasisSerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber
-    $MACAddress   = (Get-WMIObject -Class Win32_NetworkAdapter |
+    $BaseName           = $Config.BaseName
+    $LogPath            = "$LogPrefix-Info.txt"
+    $OSName             = $Win32OS.Caption
+    $OSVer              = $Win32OS.Version
+    $PSVersion          = Get-Host | Select-Object Version
+    $ChasisSerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber ## TODO: Find a unique ID for the chasis
+    $MACAddress         = (Get-WMIObject -Class Win32_NetworkAdapter |
       Where-Object {$Null -ne $_.MACaddress} |
       Select-Object -First 1).MACAddress
 
     ## Adds the generic information about the machine to a file.
     Write-Output "Writing computer name, serial number, and base info..."
-    Add-Content -Value "Date: $(Get-ActualDate)" -Path $LogPath
+    Add-Content -Value "Date: $(Get-Date)" -Path $LogPath
     Add-Content -Value "PowerShell Version: $PSVersion" -Path "$GatherLogs\$ComputerName-Info.txt"
     Add-Content -Value "Serial Number: $ChasisSerialNumber" -Path $LogPath
     Add-Content -Value "Computer Name: $($Win32OS.PSComputerName)" -Path $LogPath
@@ -235,10 +232,9 @@ function Import-Identifiers ([PSCustomObject]$Config,[String]$LogPrefix) {
         Get-PhysicalDisk |
           Select-Object FriendlyName,Model,MediaType,BusType,HealthStatus,
             OperationalStatus,Usage,Size |
-          Export-CSV -Path "$LogPrefix-HardDrives.csv" `
-            -NoTypeInformation
+          Export-CSV -Path "$LogPrefix-HardDrives.csv" -NoTypeInformation
     }
-    
+
     # Systeminfo has a lot of additional information that will be written to a file.
     Write-Host "Writing Systeminfo..."
     systeminfo > "$LogPrefix-SystemInfo.txt"
@@ -280,11 +276,10 @@ function Import-Identifiers ([PSCustomObject]$Config,[String]$LogPrefix) {
 }
 
 function Start-Antivirus ([String]$RootDirectory, [String]$LogPrefix) {
-    <#
-    .SYNOPSIS
-       Runs an antivirus scan on the machine, sending any available antivirus logs
-       to the location of the script.
-    #>
+    # .SYNOPSIS
+    #  Runs an antivirus scan on the machine, sending any available antivirus logs
+    #  to the location of the script.
+
     if (!$(Test-Path $($LogPrefix | Split-Path))) { New-Item -ItemType Directory -Path $($LogPrefix | Split-Path) | Out-Null }
     Write-Host "Running antivirus scan..."
     if($(Get-WMIObject -Class Win32_OperatingSystem).OSArchitecture -eq "64-bit"){
@@ -298,6 +293,7 @@ function Start-Antivirus ([String]$RootDirectory, [String]$LogPrefix) {
 function Import-AntivirusLogs ([String]$Directory) {
     # .SYNOPSIS
     # Sends any available antivirus logs to the location of the script.
+
     if (!$(Test-Path $Directory)) { New-Item -ItemType Directory -Path $Directory | Out-Null}
     Write-Host "Gathering scan logs..."
     if($Win32Caption -like "*Windows 7*"){
@@ -346,12 +342,11 @@ if($isAdmin -eq $False){
     Write-Warning "THIS SCRIPT WAS NOT RUN AS AN ADMINISTRATOR! SOME TASKS MAY NOT WORK OR PROVIDE INACCURATE RESULTS!"
 }
 
-## Get current time from user. We can't trust the system time b/c dead CMOS.
-## This is utilized by the Get-ActualDate supporting fucntion.
-$UserTime = Get-TimeDelta
+
 
 # Main Loop
 
+Set-Time | Out-Null
 $Config = Import-Config "$ScriptDirectory\config.xml" | Update-Config | Export-Config "$ScriptDirectory\config.xml" -PassThru
 while ($True) {
     $Options = @(
@@ -367,16 +362,16 @@ while ($True) {
     $Choices = Read-Intent $Options -Multiple -Prompt "Please select from the following."
     switch($Choices) {
         $Options[0] { Update-Signatures $ScriptDirectory }
-        $Options[1] { Import-Identifiers $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$($Config.LastHDD)-$(Get-ActualDate)" }
-        $Options[2] { Start-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$($Config.LastHDD)-$(Get-ActualDate)" }
+        $Options[1] { Import-Identifiers $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$($Config.LastHDD)-$(Get-Date)" }
+        $Options[2] { Start-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$($Config.LastHDD)-$(Get-Date)" }
         $Options[3] { Import-AntivirusLogs "$ScriptDirectory\..\..\Outputs\AVLogs" }
         $Options[4] { Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs" }
-        $Options[5] { Import-EventLogs "$ScriptDirectory\..\..\Outputs\EventLogs\$($Config.LastHDD)-$(Get-ActualDate)"}
+        $Options[5] { Import-EventLogs "$ScriptDirectory\..\..\Outputs\EventLogs\$($Config.LastHDD)-$(Get-Date)"}
         $Options[6] {
-            Import-Identifiers $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$($Config.LastHDD)-$(Get-ActualDate)"
-            Import-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$($Config.LastHDD)-$(Get-ActualDate)"
+            Import-Identifiers $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$($Config.LastHDD)-$(Get-Date)"
+            Import-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$($Config.LastHDD)-$(Get-Date)"
             Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs"
-            Import-EventLogs "$ScriptDirectory\..\..\Outputs\EventLogs\$($Config.LastHDD)-$(Get-ActualDate)"
+            Import-EventLogs "$ScriptDirectory\..\..\Outputs\EventLogs\$($Config.LastHDD)-$(Get-Date)"
         }
         $Options[7] {
             Write-Host "Exiting!"

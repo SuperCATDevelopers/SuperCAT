@@ -1,51 +1,32 @@
 #!/bin/pwsh
 
-function Get-TimeDelta {
+function Set-Time {
+    # . SYNOPSIS
+    # Provide a wrapper around Set-Date.
     param(
-        [Parameter()]
-        [switch]$Trust,
-
         [Parameter()]
         [switch]$NoPrompt
     )
-    if ($Trust) { return New-TimeSpan }
+
     if (!$NoPrompt) {
+        Write-Host
+        Set-TimeZone -Name "UTC"
         Write-Host "The current time is $([datetime]::now.ToUniversalTime().tostring("s")) UTC"
         Write-Host "Is the CMOS battery good and the time accurate?"
-        if ($(Read-Intent -TF)) { return New-TimeSpan }
+        if ($(Read-Intent -TF)) { return Get-Date }
+        Write-Host "Would you like to fix the time?"
+        if (!$(Read-Intent -TF)) { return Get-Date }
     }
     $read = Read-Host -Prompt "Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
     Try {
-        return New-TimeSpan -End $([datetime]($read))
+        return Set-Date -Date $([datetime]($read))
     }
     Catch {
-        ## Using a recursive function probably isn't best practice.
-        ## Anyone who wants to reimplement this, please do.
-        return Get-TimeDelta -NoPrompt
+        return Set-Time -NoPrompt
     }
 }
-Export-ModuleMember -Function Get-TimeDelta
+Export-ModuleMember -Function Set-Time
 
-function Get-ActualDate {
-    # .SYNOPSIS
-    # Output the system time plus the current delta.
-    param(
-        [Parameter()]
-        [switch]$Trust
-    )
-    if ($Trust) {
-        return ([datetime]::now.ToUniversalTime().tostring("s"))
-    }
-    else {
-        try {
-            return ([datetime]::now.ToUniversalTime().tostring("s")) + $UserTime
-        }
-        catch {
-            return ([datetime]::now.ToUniversalTime().tostring("s")) ## Blank dates confuse Win 7.
-        }
-    }
-}
-Export-ModuleMember -Function Get-ActualDate
 
 function Read-Intent {
     # .SYNOPSIS
@@ -142,6 +123,8 @@ Try {
 }
 Catch {
     function pause {
+        # .SYNOPSIS
+        # Provides pause function
         Read-Host -Prompt "Press enter to continue" | Out-Null
     }
     Export-ModuleMember -Function pause
