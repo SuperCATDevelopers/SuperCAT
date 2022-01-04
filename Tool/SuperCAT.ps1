@@ -213,8 +213,9 @@ function Import-Identifiers ([PSCustomObject]$Config,[String]$LogPrefix) {
     Write-Host $LogPath
     $OSName       = $Win32OS.Caption
     $OSVer        = $Win32OS.Version
+    $PSVersion    = Get-Host | Select-Object Version
     ## TODO: Find a unique ID for the chasis
-    # $ChasisSerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber
+    $ChasisSerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber
     $MACAddress   = (Get-WMIObject -Class Win32_NetworkAdapter |
       Where-Object {$Null -ne $_.MACaddress} |
       Select-Object -First 1).MACAddress
@@ -222,7 +223,8 @@ function Import-Identifiers ([PSCustomObject]$Config,[String]$LogPrefix) {
     ## Adds the generic information about the machine to a file.
     Write-Output "Writing computer name, serial number, and base info..."
     Add-Content -Value "Date: $(Get-ActualDate)" -Path $LogPath
-    Add-Content -Value "Serial Number: $SerialNumber" -Path $LogPath
+    Add-Content -Value "PowerShell Version: $PSVersion" -Path "$GatherLogs\$ComputerName-Info.txt"
+    Add-Content -Value "Serial Number: $ChasisSerialNumber" -Path $LogPath
     Add-Content -Value "Computer Name: $($Win32OS.PSComputerName)" -Path $LogPath
     Add-Content -Value "Operating System: $OSName" -Path $LogPath
     Add-Content -Value "Operating System Version: $OSVer" -Path $LogPath
@@ -236,10 +238,7 @@ function Import-Identifiers ([PSCustomObject]$Config,[String]$LogPrefix) {
           Export-CSV -Path "$LogPrefix-HardDrives.csv" `
             -NoTypeInformation
     }
-
-    Write-Host "Writing hard drive information..."
-
-
+    
     # Systeminfo has a lot of additional information that will be written to a file.
     Write-Host "Writing Systeminfo..."
     systeminfo > "$LogPrefix-SystemInfo.txt"
