@@ -25,7 +25,7 @@ function Import-Identifiers {
     ## Adds the generic information about the machine to a file.
     Write-Output "Writing computer name, serial number, and base info..."
     Add-Content -Value "Date: $(Get-Date)" -Path $LogPath
-    Add-Content -Value "PowerShell Version: $PSVersion" -Path "$GatherLogs\$ComputerName`_Info.txt"
+    Add-Content -Value "PowerShell Version: $PSVersion" -Path $LogPath
     Add-Content -Value "Serial Number: $ChasisSerialNumber" -Path $LogPath
     Add-Content -Value "Computer Name: $($Win32OS.PSComputerName)" -Path $LogPath
     Add-Content -Value "Operating System: $OSName" -Path $LogPath

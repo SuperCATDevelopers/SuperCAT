@@ -15,7 +15,7 @@ function Start-SCAP {
     if(test-path "$RootDirectory\Scripts\SCAP\cscc.exe"){
         Write-Host "Running SCAP scan, please be patient."
         Try{
-            Start-Process -FilePath "$RootDirectory\Scripts\SCAP\cscc.exe" -ArgumentList "-u $Directory"
+            return Start-Process -PassThru -FilePath "$RootDirectory\Scripts\SCAP\cscc.exe" -ArgumentList "-u $Directory"
         } Catch {
             Write-Error "SCAP cscc.exe not found or invalid."
             Write-Error "$_"

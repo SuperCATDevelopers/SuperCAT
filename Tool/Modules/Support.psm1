@@ -45,13 +45,13 @@ function Read-Intent {
         $Options,
 
         [Parameter(Position = 1, ParameterSetName = "Number")]
-        [string]$Prompt,
+        [String]$Prompt,
 
         [Parameter(ParameterSetName = "Number")]
-        [switch]$Multiple,
+        [Switch]$Multiple,
 
         [Parameter(ParameterSetName = "TF", Mandatory=$True)]
-        [switch]$TF
+        [Switch]$TF
     )
 
     ## True/False Validation
@@ -64,19 +64,28 @@ function Read-Intent {
         else { return $False }
     }
 
+    function Get-Duplicate {
+        param (
+            [Parameter(Mandatory=$True, Position = 0, ValueFromPipeline=$True)]
+            [Array]$Array
+        )
+        $Hashtable = @{}
+        $Array | ForEach-Object { $Hashtable[$_] = "" }
+        if ($Hashtable.Count -eq $Array.Count) { return $False }
+        else { return $True }
+    }
+
     ## Attempt to cast the input to an array
     $OptionArray = $([array]($Options))
 
     ## Present Options to User
-    #  Clear-Host
-    Write-Host
-    Write-Host
     Write-Host "================================================"
     if ( $Null -ne $PSBoundParameters.Prompt ) {
         Write-Host $Prompt
     }
     if ($Multiple) {
-        Write-Host "Input only numbers and commas (i.e. 1,3,4,5):"
+        Write-Host "Please select one or more of the following,"
+        Write-Host "inputting only numbers and commas (i.e. 1,25,6):"
     }
     else {
         Write-Host "Input the associated number (i.e $($OptionArray.Count - 1)):"
@@ -98,8 +107,10 @@ function Read-Intent {
             elseif (( $ResultList -ge $OptionArray.Count ) -or ( $ResultList -lt 0 )) {
                 Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count - 1)"
             }
+            elseif ($(Get-Duplicate $ResultList)) {
+                Write-Host "Please ensure there are no duplicates in your entry."
+            }
             else {
-                Write-Host
                 return $OptionArray[$ResultList]
             }
         }
@@ -114,7 +125,6 @@ function Read-Intent {
                 Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count -1)"
             }
             else {
-                Write-Host
                 return $OptionArray[$Result]
             }
         }

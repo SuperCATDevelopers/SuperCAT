@@ -66,10 +66,10 @@ function Start-Antivirus {
     if (!$(Test-Path $($LogPrefix | Split-Path))) { New-Item -ItemType Directory -Path $($LogPrefix | Split-Path) | Out-Null }
     Write-Host "Running antivirus scan..."
     if($(Get-WMIObject -Class Win32_OperatingSystem).OSArchitecture -eq "64-bit"){
-        Start-Process -FilePath "$RootDirectory\Scripts\McAfeeAV_v2\w64\scan.exe" -ArgumentList "/DRIVER=$RootDirectory\Scripts\McAfeeAV_v2\DAT /ANALYZE /ADL /SECURE /NOBREAK /TIMEOUT=10 /THREADS=64 /REPORT=$LogPrefix`_AV`_Report.txt /HTML $LogPrefix`_AV_REPORT.html"
+        return Start-Process -PassThru -FilePath "$RootDirectory\Scripts\McAfeeAV_v2\w64\scan.exe" -ArgumentList "/DRIVER=$RootDirectory\Scripts\McAfeeAV_v2\DAT /ANALYZE /ADL /SECURE /NOBREAK /TIMEOUT=10 /THREADS=64 /REPORT=$LogPrefix`_AV`_Report.txt /HTML $LogPrefix`_AV_REPORT.html"
     }
     else{
-        Start-Process -FilePath "$RootDirectory\Scripts\McAfeeAV_v2\w32\scan.exe" -ArgumentList "/DRIVER=$RootDirectory\Scripts\McAfeeAV_v2\DAT /ANALYZE /ADL /SECURE /NOBREAK /TIMEOUT=10 /THREADS=64 /REPORT=$LogPrefix`_AV`_Report.txt /HTML $LogPrefix`_AV_REPORT.html"
+        return Start-Process -PassThru -FilePath "$RootDirectory\Scripts\McAfeeAV_v2\w32\scan.exe" -ArgumentList "/DRIVER=$RootDirectory\Scripts\McAfeeAV_v2\DAT /ANALYZE /ADL /SECURE /NOBREAK /TIMEOUT=10 /THREADS=64 /REPORT=$LogPrefix`_AV`_Report.txt /HTML $LogPrefix`_AV_REPORT.html"
     }
 }
 Export-ModuleMember -Function Start-Antivirus

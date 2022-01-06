@@ -7,6 +7,7 @@
 ###############################################################################>
 
 ######################### Module Imports #######################################
+using namespace System.Collections.Generic
 
 $ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
 
@@ -53,7 +54,6 @@ function Import-Config {
         }
     }
 }
-
 function Update-Config {
     # .SYNOPSIS
     # Update config object, adding drive config if it doesn't exist.
@@ -96,7 +96,6 @@ function Update-Config {
         ## Autopull if available
 
         ## Request input if not
-        Write-Host
         Write-Host "Please enter the version in the format MajorMinor"
         Write-Host "Example: 10 for major version 1 minor verion 0"
         while ($True) {
@@ -105,7 +104,6 @@ function Update-Config {
                 Write-Host "Please try again."
             }
             else {
-                Write-Host
                 return $Result
             }
         }
@@ -132,7 +130,6 @@ function Update-Config {
         ## Autopull if available
 
         ## Request input if not
-        Write-Host
         Write-Host "Please enter the assigned drive number, zero-paded"
         Write-Host "to three digits. Example: 007 for for drive seven"
         while ($True) {
@@ -154,7 +151,6 @@ function Update-Config {
         if ($Config.KnownDrives.Count -gt 0) {
             Write-Host "Unknown drive. Would you like to add this `ndrive to database?"
             if ( !$(Read-Intent -TF) ) {
-                Write-Host
                 Write-Host "Exiting! Nothing has been written."
                 exit
             }
@@ -171,9 +167,6 @@ function Update-Config {
             Unit                = Read-Host -Prompt "What maintenance unit does this HDD belong to (i.e. 480AMXS)"
             Classification      = Read-Classification
         }
-        Write-Host
-        Write-Host "Complete!"
-        pause
     }
     while ($True) {
         Write-Host "
@@ -220,7 +213,6 @@ function Update-Config {
     $Config.LastHDD = $LocalDrive
     return $Config
 }
-
 function Export-Config {
     #.SYNOPSIS
     # Write config object to file.
@@ -244,7 +236,6 @@ function Export-Config {
         return $True
     }
 }
-
 function Get-LogPrefix {
     # .SYNOPSIS
     # Pull system abbreviations and mesh config data to provide a log prefix.
@@ -270,7 +261,7 @@ function Get-LogPrefix {
             $_.SystemName -eq $Config.KnownDrives.$($Config.LastHDD).SystemType
         }).SystemAbbreviation
     $Unit       = $Config.KnownDrives.$($Config.LastHDD).Unit
-    $Date       = $(Get-Date -Format "yyyyMMdd")
+    $Date       = $(Get-Date -Format "yyyyMMdd" -Date $Config.LastAccessTimeUTC)
     $Version    = $Config.KnownDrives.$($Config.LastHDD).SystemVersion
     $Drive      = $Config.KnownDrives.$($Config.LastHDD).DriveName
     $Scan       = $Config.KnownDrives.$($Config.LastHDD).ScanNumber
@@ -284,52 +275,69 @@ function Get-LogPrefix {
 ################################ General #######################################
 
 ## Check for administrative privildges, warn if necessary, continue
-$isAdmin = ([Security.Principal.WindowsPrincipal](
-  [Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole(
-  [Security.Principal.WindowsBuiltInRole]::Administrator)
-if($isAdmin -eq $False){
+if(([Security.Principal.WindowsPrincipal](
+    [Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator) -eq $False){
+
     Write-Warning "THIS SCRIPT WAS NOT RUN AS AN ADMINISTRATOR! SOME TASKS MAY NOT WORK OR PROVIDE INACCURATE RESULTS!"
 }
 
-
-
-# Main Loop
-
 Set-Time | Out-Null
-$Config = Import-Config "$ScriptDirectory\config.xml" | Update-Config -RootDirectory $ScriptDirectory | Export-Config "$ScriptDirectory\config.xml" -PassThru
+$Config = Import-Config "$ScriptDirectory\config.xml" |
+    Update-Config -RootDirectory $ScriptDirectory |
+    Export-Config "$ScriptDirectory\config.xml" -PassThru
 $LogPrefix = Get-LogPrefix $Config $ScriptDirectory
-while ($True) {
-    $Options = @(
-        "Update Antivirus (Requires Pre-Approved Actions)",
-        "Collect Computer Information",
-        "Initialize Antivirus Scan",
-        "Collect Antivirus Logs",
-        "Initialize SCAP",
-        "Collect Windows Event Logs",
-        "All Tasks (Collection Only, No Antivirus Updating)",
-        "Exit Program"
-    )
-    $Choices = Read-Intent $Options -Multiple -Prompt "Please select from the following."
-    switch($Choices) {
-        $Options[0]  { Update-AVSignatures $ScriptDirectory }
-        $Options[1]  { Import-Identifiers $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix" }
-        $Options[2]  { Start-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$LogPrefix" }
-        $Options[3]  { Import-AntivirusLogs "$ScriptDirectory\..\..\Outputs\AVLogs" }
-        $Options[4]  { Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)" }
-        $Options[5]  { Import-EventLogs "$ScriptDirectory\..\..\Outputs\EventLogs\$LogPrefix"}
-        $Options[-2] {
-            Import-Identifiers $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix"
-            Import-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$LogPrefix"
-            Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)"
-            Import-EventLogs "$ScriptDirectory\..\..\Outputs\EventLogs\$LogPrefix"
+
+
+$AllOptions = @(
+    "Update Antivirus (Requires Pre-Approved Actions)",
+    "Collect Computer Information",
+    "Initialize Antivirus Scan",
+    "Collect Antivirus Logs",
+    "Initialize SCAP",
+    "Collect Windows Event Logs",
+    "All Tasks (No Antivirus Updating, Auto exits)",
+    "Exit Program"
+)
+$ExitLock = @()
+for (([List[string]]$RemainingOptions = $AllOptions),($Chosen = Read-Intent $AllOptions -Multiple)
+    $Chosen -notcontains $AllOptions[-1]
+    $Chosen = Read-Intent $RemainingOptions -Multiple) {
+    foreach ( $Selected in $Chosen ) {
+        if (!($RemainingOptions.Remove($Selected))) {
+            throw "Tried to remove $Selected from the list $RemainingOptions`."
         }
-        $Options[-1] {
-            Write-Host "Exiting!"
-            exit
+        if (($RemainingOptions[-2] -eq $AllOptions[-2]) -and
+            ($AllOptions[1..$($AllOptions.GetUpperBound(0)-2)] -contains $Selected)) {
+            if (!($RemainingOptions.Remove($AllOptions[-2]))) {
+                throw "Tried to remove $Selected from the list $RemainingOptions`."
+            }
         }
+    }
+    if ($Chosen -contains $AllOptions[-2]) {
+        $Chosen = $AllOptions[1..$($AllOptions.GetUpperBound(0)-2)]
+        $Chosen += $AllOptions[-1]
+    }
+    switch($Chosen) {
+        $AllOptions[0]  { Update-AVSignatures $ScriptDirectory }
+        $AllOptions[1]  { Import-Identifiers $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix" }
+        $AllOptions[2]  { $ExitLock += Start-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$LogPrefix" }
+        $AllOptions[3]  { Import-AntivirusLogs "$ScriptDirectory\..\..\Outputs\AVLogs" }
+        $AllOptions[4]  { $ExitLock += Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)" }
+        $AllOptions[5]  { Import-EventLogs "$ScriptDirectory\..\..\Outputs\EventLogs\$LogPrefix"}
+        $AllOptions[-2] { throw "`$AllOptions[-2] if statement failed to evaluate correctly." }
+        $AllOptions[-1] { Out-Null }
         Default {
-            Write-Host "Please only input numbers 0 to 7 and commas (i.e. 1,3,5)"
+            Write-Host "Please only input numbers 0 to $($AllOptions.GetUpperBound(0)) and commas (i.e. 1,3,5)"
             Write-Host "Recieved Input $_"
         }
     }
+    if ($Chosen -contains $AllOptions[-1]) { break }
+}
+if (($ExitLock.Count -ne 0) -and ($ExitLock.HasExited -contains $False)) {
+    Write-Host "The following processes are still running: $($ExitLock.Where(
+        {$_.HasExited -eq $False}).ProcessName)"
+    Write-Host "Waiting for processes to finish up..."
+    $ExitLock.WaitForExit()
+    Write-Host "Done!"
 }
