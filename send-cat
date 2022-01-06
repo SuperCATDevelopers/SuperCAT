@@ -1,8 +1,0 @@
-#!/bin/bash
-pushd .
-cd ~/Documents/GitHub
-rm -f SuperCAT.zip
-zip -r SuperCAT.zip SuperCAT
-scp -J dock SuperCAT.zip 192.168.50.12:Desktop/
-ssh -J dock 192.168.50.12 recv-cat.bat
-popd

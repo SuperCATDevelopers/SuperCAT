@@ -10,11 +10,11 @@ function Set-Time {
 
     if (!$NoPrompt) {
         Write-Host
-        Set-TimeZone -Name "UTC"
+        Set-TimeZone -Id "UTC"
         Write-Host "The current time is $([datetime]::now.ToUniversalTime().tostring("s")) UTC"
         Write-Host "Is the CMOS battery good and the time accurate?"
         if ($(Read-Intent -TF)) { return Get-Date }
-        Write-Host "Would you like to fix the time?"
+        Write-Host "Would you like to change the system time?"
         if (!$(Read-Intent -TF)) { return Get-Date }
     }
     $read = Read-Host -Prompt "Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
@@ -69,6 +69,8 @@ function Read-Intent {
 
     ## Present Options to User
     #  Clear-Host
+    Write-Host
+    Write-Host
     Write-Host "================================================"
     if ( $Null -ne $PSBoundParameters.Prompt ) {
         Write-Host $Prompt
@@ -91,12 +93,13 @@ function Read-Intent {
             $Result = Read-Host -Prompt "Select"
             $ResultList = $Result.Split(",")
             if ($Result -notmatch "^\d+(,\d+)*$") {
-                Write-Host "Please only input numbers and commas (eg 1,25,6)"
+                Write-Host "Please only input numbers and commas (i.e. 1,25,6)"
             }
             elseif (( $ResultList -ge $OptionArray.Count ) -or ( $ResultList -lt 0 )) {
                 Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count - 1)"
             }
             else {
+                Write-Host
                 return $OptionArray[$ResultList]
             }
         }
@@ -105,12 +108,13 @@ function Read-Intent {
         while ($True) {
             $Result = Read-Host -Prompt "Select"
             if ($Result -notmatch "\d+") {
-                Write-Host "Please only input numbers and commas (eg 1,25,6)"
+                Write-Host "Please only input one number (i.e. $($OptionArray.Count - 1))"
             }
             elseif (( $Result -ge $OptionArray.Count ) -or ( $Result -lt 0 )) {
-                Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count)"
+                Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count -1)"
             }
             else {
+                Write-Host
                 return $OptionArray[$Result]
             }
         }

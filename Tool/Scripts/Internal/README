@@ -1,1 +1,0 @@
-This folder is for scripts developed internally. Items are organized by what in the Cyber Kill Chain is detected; many will fall under more than one. Use your best judgement to determine where to place items. The support folder is for scripts solely providing capability to SuperCAT, not detection functions; think file parsing and such.
