@@ -19,8 +19,8 @@ After you have downloaded the SuperCat Tool you will need to populate the other 
 For the Anti-Virus Definition Files to be updated get the latest DAT file for DOD Patch Repository under the ESS Collection. https://patches.csd.disa.mil/CollectionInfo.aspx?id=863&bc=394_1_15_asc
 * DAT files are places in the .\Tool\AV\DAT folder
 
-SuperCAT normally relies on the McAfee VirusScan Command Line scanner (VSCL) to operate. 
-* DOD Users may obtain a copy of this at the [DOD Patch Repository](https://patches.csd.disa.mil) by searching for VSCL Windows 
+SuperCAT normally relies on the McAfee VirusScan Command Line scanner (VSCL) to operate.
+* DOD Users may obtain a copy of this at the [DOD Patch Repository](https://patches.csd.disa.mil) by searching for VSCL Windows
 * Non-DOD, for information on obtaining this from McAfee is located here: https://kc.mcafee.com/corporate/index?page=content&id=KB5114
 * VSCL is placed in the .\Tool\AV\w64 folder
 ** Note: Currently, a 32-bit scanner has not been identified. DOD Patch Repo no longer provides the 32 bit scanner.
@@ -81,6 +81,3 @@ Once it is completed the CD/DVD will contain files with the extracted informatio
 SuperCAT gets an extract of Windows Event logs and stores them as raw EVTX files. These can be injested directly with logstash. In addition, within the Tools\QuicklookTools folder is a tool (FilterEventLogs.ps1) for parsing the evtx files and converting them to csv files.  The user can supply a txt file of EventIDs for which to filter the CSV and it will output an analysis file with the EventIDs the user is interested in.
 The user can get a good list of EventIDs to use for Incident Response, Threat Hunting, Forensics, etc at the following location:
 https://github.com/TonyPhipps/SIEM/blob/ec2dde7ba7997bfb9a88acf27fbb1fde7e32d20c/Notable-Event-IDs.md
-
-
-

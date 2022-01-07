@@ -18,6 +18,7 @@ function Import-Identifiers {
     $OSVer              = $Win32OS.Version
     $PSVersion          = Get-Host | Select-Object Version
     $ChasisSerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber ## TODO: Find a unique ID for the chasis
+    $HardDrives         = Get-PhysicalDisk | Select-Object FriendlyName,Model,SerialNumber,MediaType,BusType,HealthStatus,OperationalStatus,Usage,Size
     $MACAddress         = (Get-WMIObject -Class Win32_NetworkAdapter |
       Where-Object {$Null -ne $_.MACaddress} |
       Select-Object -First 1).MACAddress
@@ -35,8 +36,8 @@ function Import-Identifiers {
 
     if ((Get-Host).Version.Major -gt 2) {
         Get-PhysicalDisk |
-          Select-Object FriendlyName,Model,MediaType,BusType,HealthStatus,
-            OperationalStatus,Usage,Size |
+          Select-Object FriendlyName,Model,SerialNumber,MediaType,BusType,
+            HealthStatus,OperationalStatus,Usage,Size |
           Export-CSV -Path "$LogPrefix`_HardDrives.csv" -NoTypeInformation
     }
 
