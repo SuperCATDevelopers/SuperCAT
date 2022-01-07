@@ -60,6 +60,7 @@ function Read-Intent {
         while ( -not (@("y","n","yes","no") -eq $Result) ) {
             $Result = Read-Host -Prompt "Please enter yes or no"
         }
+        Write-Host
         if ( @("y","yes") -eq $Result ) { return $True }
         else { return $False }
     }
@@ -79,6 +80,7 @@ function Read-Intent {
     $OptionArray = $([array]($Options))
 
     ## Present Options to User
+    Write-Host
     Write-Host "================================================"
     if ( $Null -ne $PSBoundParameters.Prompt ) {
         Write-Host $Prompt
@@ -111,6 +113,7 @@ function Read-Intent {
                 Write-Host "Please ensure there are no duplicates in your entry."
             }
             else {
+                Write-Host
                 return $OptionArray[$ResultList]
             }
         }
@@ -125,6 +128,7 @@ function Read-Intent {
                 Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count -1)"
             }
             else {
+                Write-Host
                 return $OptionArray[$Result]
             }
         }

@@ -1,6 +1,6 @@
 config.xml
 config.json
 Scripts/SCAP/**
-McAfeeAV_v2/DAT/**
-McAfeeAV_v2/w32/**
-McAfeeAV_v2/w64/**
+Scripts/McAfeeAV_v2/DAT/**
+Scripts/McAfeeAV_v2/w32/**
+Scripts/McAfeeAV_v2/w64/**
