@@ -1,7 +1,7 @@
 #!/bin/pwsh
 
 <###############################################################################
-## SUPERCAT (CYBER ASSESSMENT TOOL) V0.3.3
+## SUPERCAT (CYBER ASSESSMENT TOOL) V0.3.4
 ## DEVELOPED BY: SSGT CLINTON REEL // CLINTON.REEL@US.AF.MIL
 ## ADDITIONAL DEVELOPERS IN CONTRIBUTORS.TXT
 ###############################################################################>
@@ -29,7 +29,7 @@ function Import-Config {
         [ValidateNotNullOrEmpty()]
         [String]$File
     )
-    $Version = [System.Version]"2.2.0"
+    $Version = [System.Version]"0.2.2"
     if (Test-Path -Path $File -PathType Leaf) {
         Try {
             $Config = $(Import-Clixml -ErrorAction Stop -Path $File)
