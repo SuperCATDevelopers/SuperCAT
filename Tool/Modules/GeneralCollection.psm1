@@ -1,4 +1,4 @@
-function Import-Identifiers {
+function Import-Identifier {
     # .SYNOPSIS
     # Export general system Information
     param (
@@ -82,4 +82,4 @@ function Import-Identifiers {
     Get-Service | Select-Object Name,ServiceName,DisplayName,Status |
         Export-CSV -NoTypeInformation -Path "$LogPrefix`_Services.csv"
 }
-Export-ModuleMember -Function Import-Identifiers
+Export-ModuleMember -Function Import-Identifier

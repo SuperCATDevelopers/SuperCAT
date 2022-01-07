@@ -1,4 +1,4 @@
-function Import-EventLogs {
+function Import-EventLog {
     # .SYNOPSIS
     # Gathers Windows Events logs and sends it to the location of the script
     param (
@@ -14,4 +14,4 @@ function Import-EventLogs {
     wevtutil.exe epl Security "$LogPrefix`_Security.evtx"
     wevtutil.exe epl Application "$LogPrefix`_Application.evtx"
 }
-Export-ModuleMember -Function Import-EventLogs
+Export-ModuleMember -Function Import-EventLog

@@ -1,4 +1,4 @@
-function Update-AVSignatures {
+function Update-AVSignature {
     # .SYNOPSIS
     # Update antivirus definitions.
     # .DESCRIPTION
@@ -26,9 +26,9 @@ function Update-AVSignatures {
         Write-Host "Installed DAT files are more up-to-date than what is on the disc."
     }
 }
-Export-ModuleMember -Function Update-AVSignatures
+Export-ModuleMember -Function Update-AVSignature
 
-function Import-AntivirusLogs {
+function Import-AntivirusLog {
     # .SYNOPSIS
     # Sends any available antivirus logs to the location of the script.
 
@@ -47,7 +47,7 @@ function Import-AntivirusLogs {
         Copy-Item -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\" -Destination "$Directory" -Recurse
     }
 }
-Export-ModuleMember -Function Import-AntivirusLogs
+Export-ModuleMember -Function Import-AntivirusLog
 
 function Start-Antivirus {
     # .SYNOPSIS
