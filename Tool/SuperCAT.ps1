@@ -147,9 +147,8 @@ function Update-Config {
         }
     }
 
-    #$LocalDrive = (Get-WMIObject Win32_PhysicalMedia |
-    #  Where-Object {$_.Tag -eq "\\.\PHYSICALDRIVE0"}).SerialNumber
-    $LocalDrive = "AAAA"
+    $LocalDrive = (Get-WMIObject Win32_PhysicalMedia |
+      Where-Object {$_.Tag -eq "\\.\PHYSICALDRIVE0"}).SerialNumber
     $Config.LastAccessTimeUTC = Get-Date
     if ($Config.KnownDrives.Keys -NotContains $LocalDrive) {
         if ($Config.KnownDrives.Count -gt 0) {
