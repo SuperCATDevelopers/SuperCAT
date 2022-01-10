@@ -7,7 +7,6 @@
 ###############################################################################>
 
 ######################### Module Imports #######################################
-using namespace System.Collections.Generic
 
 $ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
 
@@ -70,6 +69,9 @@ function Update-Config {
     )
 
     function Read-CSVColumn {
+        # .SYNOPSIS
+        # Pull an arbitrary CSV and request the user to pick a row from the
+        # given column.
         param (
             [Parameter(Mandatory=$True,Position=0)]
             [ValidateNotNullOrEmpty()]
@@ -92,37 +94,44 @@ function Update-Config {
         }
     }
     function Read-SystemVersion {
-        ## Autopull if available
-
-        ## Request input if not
+        # .SYNOPSIS
+        # Request the version number from the user, validating the format.
         Write-Host "================================================"
         Write-Host "Please enter the version in the format MajorMinor"
         Write-Host "Example: 10 for major version 1 minor verion 0"
         Write-Host "================================================"
         while ($True) {
-            $Result = Read-Host -Prompt "Version Number"
-            if ($Result -notmatch "\d\d") {
-                Write-Host "Please try again."
+            try {
+                [int]$Result = Read-Host -Prompt "Version Number"
+            } catch {
+                Write-Host "Please enter a number."
+            }
+            if ($Result -gt 99) {
+                Write-Host "Please enter a version less than 99."
             }
             else {
-                Write-Host
-                return $Result
+                return $([String]$Result).PadRight(2,"0")
             }
         }
     }
     function Read-DriveName {
-        ## Autopull if available
-
-        ## Request input if not
-        Write-Host "Please enter the assigned drive number, zero-paded"
-        Write-Host "to three digits. Example: 007 for for drive seven"
+        # .SYNOPSIS
+        # Ask the user for the drive number, padding to 3 digits.
+        Write-Host "================================================"
+        Write-Host "Please enter the assigned drive number, between"
+        Write-Host "0 and 999. Example: 27"
+        Write-Host "================================================"
         while ($True) {
-            $Result = Read-Host -Prompt "Drive Number"
-            if ($Result -notmatch "\d\d\d") {
-                Write-Host "Please try again."
+            try {
+                [int]$Result = Read-Host -Prompt "Drive Number"
+            } catch {
+                Write-Host "Please enter a number."
+            }
+            if ($Result -gt 999) {
+                Write-Host "Please enter a number less than 999."
             }
             else {
-                return $Result
+                return $([String]$Result).PadLeft(3,"0")
             }
         }
     }
@@ -281,26 +290,13 @@ $AllOptions = @(
     "All Tasks (No Antivirus Updating, Auto exits)",
     "Exit Program"
 )
-
 $ExitLock = @() ## Keep track of what programs have been started.
-[List[string]]$RemainingOptions = $AllOptions
+$RemainingOptions = @()
+$RemainingOptions += $AllOptions
 while ($Chosen -notcontains $AllOptions[-1]) {
     $Chosen = Read-Intent $RemainingOptions -Multiple
-    ## Mark all selected options as complete in the list, preventing their execution.
-    foreach ($Selected in $Chosen.Where({($_ -ne $AllOptions[-1]) -and
-        !($_.Contains("(Complete)")) -and !($_.Contains("(Unavailable)"))})) {
-        $Index = $RemainingOptions.IndexOf($Selected)
-        $RemainingOptions[$Index] = $RemainingOptions[$Index].Insert(0,"(Complete) ")
-
-        if (($RemainingOptions[-2] -eq $AllOptions[-2]) -and
-            ($AllOptions[1..$($AllOptions.GetUpperBound(0)-2)] -contains $Selected)) {
-            $RemainingOptions[-2] = $RemainingOptions[-2].Insert(0,"(Unavailable) ")
-        }
-
-    }
-
-    ## Handles "All Tasks" by setting $Chosen to everything but AV.
-    ## Unless of course the user selects AV as well.
+    ## Handles "All Tasks" by setting $Chosen to everything but AV Update.
+    ## Unless of course the user selects AV Update as well.
     if ($Chosen -contains $AllOptions[-2]) {
         if ($Chosen -contains $AllOptions[0]) { ## AV
             $Chosen = $AllOptions[0..$($AllOptions.GetUpperBound(0)-2)]
@@ -310,7 +306,6 @@ while ($Chosen -notcontains $AllOptions[-1]) {
         }
         $Chosen += $AllOptions[-1]
     }
-
     switch($Chosen) {
         $AllOptions[0]  { Update-AVSignature $ScriptDirectory }
         $AllOptions[1]  { Import-Identifier $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix" }
@@ -329,6 +324,17 @@ while ($Chosen -notcontains $AllOptions[-1]) {
         Default {
             Write-Host "Please only input numbers 0 to $($AllOptions.GetUpperBound(0)) and commas (i.e. 1,3,5)"
             Write-Host "Recieved Input $_"
+        }
+    }
+    ## Mark all selected options as complete in the list, preventing their execution.
+    foreach ($Selected in $Chosen.Where({($_ -ne $AllOptions[-1]) -and
+        !($_.Contains("(Complete)")) -and !($_.Contains("(Unavailable)"))})) {
+        $Index = $RemainingOptions.IndexOf($Selected)
+        $RemainingOptions[$Index] = $RemainingOptions[$Index].Insert(0,"(Complete) ")
+
+        if (($RemainingOptions[-2] -eq $AllOptions[-2]) -and
+            ($AllOptions[1..$($AllOptions.GetUpperBound(0)-2)] -contains $Selected)) {
+            $RemainingOptions[-2] = $RemainingOptions[-2].Insert(0,"(Unavailable) ")
         }
     }
     Write-Host
