@@ -11,10 +11,14 @@ function Set-Time {
     if (!$NoPrompt) {
         Write-Host
         Set-TimeZone -Id "UTC"
+        Write-Host "================================================"
         Write-Host "The current time is $([datetime]::now.ToUniversalTime().tostring("s")) UTC"
         Write-Host "Is the CMOS battery good and the time accurate?"
+        Write-Host "================================================"
         if ($(Read-Intent -TF)) { return Get-Date }
+        Write-Host "================================================"
         Write-Host "Would you like to change the system time?"
+        Write-Host "================================================"
         if (!$(Read-Intent -TF)) { return Get-Date }
     }
     $read = Read-Host -Prompt "Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"

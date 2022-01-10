@@ -1,6 +1,5 @@
 SystemAbbreviation,SystemName
-CA,CAPRE
-CE,CETS
-DT,DTADS
-VI,VIPER
+WN,Windows
+MC,Macintosh
+LX,Linux
 ZZ,Other
