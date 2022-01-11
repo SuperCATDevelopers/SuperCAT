@@ -1,5 +1,3 @@
-#!/bin/pwsh
-
 <###############################################################################
 ## SUPERCAT (CYBER ASSESSMENT TOOL) V0.3.4
 ## DEVELOPED BY: SSGT CLINTON REEL // CLINTON.REEL@US.AF.MIL
@@ -36,9 +34,6 @@ function Import-Config {
         Catch {
             throw "The file $File incorrectly formated, please delete to force recreation."
         }
-    }
-    elseif ( Test-Path -Path $File -PathType Container ) {
-        throw "$File is a directory!"
     }
     else {
         $Config = [PSCustomObject]@{
