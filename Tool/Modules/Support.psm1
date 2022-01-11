@@ -9,6 +9,8 @@ function Set-Time {
     )
 
     if (!$NoPrompt) {
+        Write-Host "Setting system time zone to UTC..."
+        Set-TimeZone -Id "UTC"
         Write-Host
         Write-Host "================================================"
         Write-Host "The current time is $([datetime]::now.ToUniversalTime().tostring("s")) UTC"

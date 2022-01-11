@@ -47,7 +47,7 @@ function Import-Config {
             LastAccessTimeUTC   = Get-Date
             LastWriteTimeUTC    = Get-Date
             LastHDD             = ''
-            Campus              = Read-Host -Prompt "Which campus is this"
+            Location            = Read-Host -Prompt "Which location is this"
             ScanningOrg         = Read-Host -Prompt "What is the scanning organization"
             KnownDrives         = @{}
         }
@@ -169,7 +169,7 @@ function Update-Config {
         Write-Host "================================================"
         Write-Host "Is this information correct?"
         Write-Host
-        Write-Host "Campus              = $($Config.Campus)"
+        Write-Host "Location            = $($Config.Location)"
         Write-Host "Organization        = $($Config.ScanningOrg)"
         Write-Host "Drive Name          = $($Config.KnownDrives.$LocalDrive.DriveName)"
         Write-Host "System Type         = $($Config.KnownDrives.$LocalDrive.SystemType)"
@@ -181,7 +181,7 @@ function Update-Config {
         $Config.KnownDrives.$LocalDrive.LastWriteTimeUTC = Get-Date
         $Config.LastWriteTimeUTC = Get-Date
         $SelectionArray = @(
-            "Campus",
+            "Location",
             "Organization",
             "Drive Name",
             "System Type",
@@ -190,7 +190,7 @@ function Update-Config {
             "Classification"
         )
         switch($(Read-Intent $SelectionArray "What should be changed?")) {
-            $SelectionArray[0] {$Config.Campus                                  = Read-Host -Prompt "Campus"}
+            $SelectionArray[0] {$Config.Location                                  = Read-Host -Prompt "Location"}
             $SelectionArray[1] {$Config.ScanningOrg                             = Read-Host -Prompt "Organization"}
             $SelectionArray[2] {$Config.KnownDrives.$LocalDrive.DriveName       = Read-DriveName}
             $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-CSVColumn "$RootDirectory\PlatformList.csv" "SystemName"}
