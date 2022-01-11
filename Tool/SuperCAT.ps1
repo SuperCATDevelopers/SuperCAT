@@ -7,7 +7,6 @@
 ###############################################################################>
 
 ######################### Module Imports #######################################
-using namespace System.Collections.Generic
 
 $ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
 
@@ -48,8 +47,8 @@ function Import-Config {
             LastAccessTimeUTC   = Get-Date
             LastWriteTimeUTC    = Get-Date
             LastHDD             = ''
-            BaseName            = Read-Host -Prompt "What is the base's name"
-            ScanningOrg         = Read-Host -Prompt "What is the scanning organization (i.e. 52CS)"
+            Location            = Read-Host -Prompt "Which location is this"
+            ScanningOrg         = Read-Host -Prompt "What is the scanning organization"
             KnownDrives         = @{}
         }
     }
@@ -69,80 +68,70 @@ function Update-Config {
         [String]$RootDirectory
     )
 
-    function Read-SystemType {
+    function Read-CSVColumn {
+        # .SYNOPSIS
+        # Pull an arbitrary CSV and request the user to pick a row from the
+        # given column.
         param (
+            [Parameter(Mandatory=$True,Position=0)]
+            [ValidateNotNullOrEmpty()]
+            [String]$CSVPath,
             [Parameter(Mandatory=$True,Position=1)]
             [ValidateNotNullOrEmpty()]
-            [String]$RootDirectory
+            [String]$Column
         )
-
-        ## Autopull if available
-        if (Test-Path -Path "C:\Capre_rel.cer" -PathType Leaf) {
-            return "CAPRE"
-        }
-
-        ## Request input if not
         Try {
-            $PlatformList = Import-CSV -Path "$RootDirectory\PlatformList.csv"
+            $CSV = Import-CSV -Path $CSVPath
         } Catch {
-            throw "PlatformList.csv doesn't exist! Please reinstall SuperCAT."
+            throw "$CSVPath doesn't exist! Please reinstall SuperCAT or populate the list."
         }
 
-        $result = $(Read-Intent $PlatformList.SystemName "What type of system is this?")
+        $result = $(Read-Intent $CSV.$Column "What is is the $Column?")
         if ( $result -eq "Other") {
-            return $(Read-Host -Prompt "What type of system is this")
+            return $(Read-Host -Prompt "What is the $Column")
         } else {
             return $result
         }
     }
     function Read-SystemVersion {
-        ## Autopull if available
-
-        ## Request input if not
+        # .SYNOPSIS
+        # Request the version number from the user, validating the format.
+        Write-Host "================================================"
         Write-Host "Please enter the version in the format MajorMinor"
         Write-Host "Example: 10 for major version 1 minor verion 0"
+        Write-Host "================================================"
         while ($True) {
-            $Result = Read-Host -Prompt "Version Number"
-            if ($Result -notmatch "\d\d") {
-                Write-Host "Please try again."
+            try {
+                [int]$Result = Read-Host -Prompt "Version Number"
+            } catch {
+                Write-Host "Please enter a number."
+            }
+            if ($Result -gt 99) {
+                Write-Host "Please enter a version less than 99."
             }
             else {
-                Write-Host
-                return $Result
+                return $([String]$Result).PadRight(2,"0")
             }
-        }
-    }
-    function Read-Classification {
-        ## Autopull if available
-
-        ## Request input if not
-        $SelectionArray = @(
-            "Unclassified",
-            "Confidential",
-            "Secret",
-            "Top Secret",
-            "Other"
-        )
-        $result = $(Read-Intent $SelectionArray "What is the classification?")
-        if ( $result -eq "Other") {
-            return $(Read-Host -Prompt "What is the classification")
-        } else {
-            return $result
         }
     }
     function Read-DriveName {
-        ## Autopull if available
-
-        ## Request input if not
-        Write-Host "Please enter the assigned drive number, zero-paded"
-        Write-Host "to three digits. Example: 007 for for drive seven"
+        # .SYNOPSIS
+        # Ask the user for the drive number, padding to 3 digits.
+        Write-Host "================================================"
+        Write-Host "Please enter the assigned drive number, between"
+        Write-Host "0 and 999. Example: 27"
+        Write-Host "================================================"
         while ($True) {
-            $Result = Read-Host -Prompt "Drive Number"
-            if ($Result -notmatch "\d\d\d") {
-                Write-Host "Please try again."
+            try {
+                [int]$Result = Read-Host -Prompt "Drive Number"
+            } catch {
+                Write-Host "Please enter a number."
+            }
+            if ($Result -gt 999) {
+                Write-Host "Please enter a number less than 999."
             }
             else {
-                return $Result
+                return $([String]$Result).PadLeft(3,"0")
             }
         }
     }
@@ -152,7 +141,9 @@ function Update-Config {
     $Config.LastAccessTimeUTC = Get-Date
     if ($Config.KnownDrives.Keys -NotContains $LocalDrive) {
         if ($Config.KnownDrives.Count -gt 0) {
+            Write-Host "================================================"
             Write-Host "Unknown drive. Would you like to add this `ndrive to database?"
+            Write-Host "================================================"
             if ( !$(Read-Intent -TF) ) {
                 Write-Host "Exiting! Nothing has been written."
                 exit
@@ -167,42 +158,45 @@ function Update-Config {
             LastAccessTimeUTC   = Get-Date
             LastWriteTimeUTC    = Get-Date
             DriveName           = Read-DriveName
-            SystemType          = Read-SystemType $RootDirectory
+            SystemType          = Read-CSVColumn "$RootDirectory\PlatformList.csv" "SystemName"
             SystemVersion       = Read-SystemVersion
-            Unit                = Read-Host -Prompt "What maintenance unit does this HDD belong to (i.e. 480AMXS)"
-            Classification      = Read-Classification
+            SystemOwner         = Read-Host -Prompt "What organization does this system belong to"
+            Classification      = Read-CSVColumn "$RootDirectory\ClassificationList.csv" "Classification"
         }
     }
     while ($True) {
-        Write-Host "`n`n`n
-            Base Name         = $($Config.BaseName)
-            Organization      = $($Config.ScanningOrg)
-            Drive Name        = $($Config.KnownDrives.$LocalDrive.DriveName)
-            System Type       = $($Config.KnownDrives.$LocalDrive.SystemType)
-            System Version    = $($Config.KnownDrives.$LocalDrive.SystemVersion)
-            Maintenance Unit  = $($Config.KnownDrives.$LocalDrive.Unit)
-            Classification    = $($Config.KnownDrives.$LocalDrive.Classification)"
+        Write-Host
+        Write-Host "================================================"
         Write-Host "Is this information correct?"
-        if ($(Read-Intent -TF)) { break }
+        Write-Host
+        Write-Host "Location            = $($Config.Location)"
+        Write-Host "Organization        = $($Config.ScanningOrg)"
+        Write-Host "Drive Name          = $($Config.KnownDrives.$LocalDrive.DriveName)"
+        Write-Host "System Type         = $($Config.KnownDrives.$LocalDrive.SystemType)"
+        Write-Host "System Version      = $($Config.KnownDrives.$LocalDrive.SystemVersion)"
+        Write-Host "System Owner        = $($Config.KnownDrives.$LocalDrive.SystemOwner)"
+        Write-Host "Classification      = $($Config.KnownDrives.$LocalDrive.Classification)"
+        Write-Host "================================================"
+        if ($(Read-Intent -TF)) { Write-Host; break }
         $Config.KnownDrives.$LocalDrive.LastWriteTimeUTC = Get-Date
         $Config.LastWriteTimeUTC = Get-Date
         $SelectionArray = @(
-            "Base Name",
+            "Location",
             "Organization",
             "Drive Name",
             "System Type",
             "System Version",
-            "Maintenance Unit",
+            "System Owner",
             "Classification"
         )
         switch($(Read-Intent $SelectionArray "What should be changed?")) {
-            $SelectionArray[0] {$Config.BaseName                                = Read-Host -Prompt "Base Name"}
+            $SelectionArray[0] {$Config.Location                                  = Read-Host -Prompt "Location"}
             $SelectionArray[1] {$Config.ScanningOrg                             = Read-Host -Prompt "Organization"}
             $SelectionArray[2] {$Config.KnownDrives.$LocalDrive.DriveName       = Read-DriveName}
-            $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-SystemType $RootDirectory}
+            $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-CSVColumn "$RootDirectory\PlatformList.csv" "SystemName"}
             $SelectionArray[4] {$Config.KnownDrives.$LocalDrive.SystemVersion   = Read-SystemVersion}
-            $SelectionArray[5] {$Config.KnownDrives.$LocalDrive.Unit            = Read-Host -Prompt "Maintenance Unit"}
-            $SelectionArray[6] {$Config.KnownDrives.$LocalDrive.Classification  = Read-Classification}
+            $SelectionArray[5] {$Config.KnownDrives.$LocalDrive.SystemOwner     = Read-Host -Prompt "System Owner"}
+            $SelectionArray[6] {$Config.KnownDrives.$LocalDrive.Classification  = Read-CSVColumn "$RootDirectory\ClassificationList.csv" "Classification"}
             Default {throw "Update-Config switch fell through."}
         }
 
@@ -258,14 +252,14 @@ function Get-LogPrefix {
         $PlatformList | Where-Object {
             $_.SystemName -eq $Config.KnownDrives.$($Config.LastHDD).SystemType
         }).SystemAbbreviation
-    $Unit       = $Config.KnownDrives.$($Config.LastHDD).Unit
-    $Date       = $(Get-Date -Format "yyyyMMdd_HHmm" -Date $Config.LastAccessTimeUTC)
-    $Version    = $Config.KnownDrives.$($Config.LastHDD).SystemVersion
-    $Drive      = $Config.KnownDrives.$($Config.LastHDD).DriveName
+    $SystemOwner  = $Config.KnownDrives.$($Config.LastHDD).SystemOwner
+    $Date         = $(Get-Date -Format "yyyyMMdd_HHmm" -Date $Config.LastAccessTimeUTC)
+    $Version      = $Config.KnownDrives.$($Config.LastHDD).SystemVersion
+    $Drive        = $Config.KnownDrives.$($Config.LastHDD).DriveName
     if ($SCAP) {
-        return "$Unit`_$SystemAbbreviation$Version`_$Drive"
+        return "$SystemOwner`_$SystemAbbreviation$Version`_$Drive"
     } else {
-        return "$Date`_$Unit`_$SystemAbbreviation$Version`_$Drive"
+        return "$Date`_$SystemOwner`_$SystemAbbreviation$Version`_$Drive"
     }
 }
 
@@ -296,26 +290,13 @@ $AllOptions = @(
     "All Tasks (No Antivirus Updating, Auto exits)",
     "Exit Program"
 )
-
 $ExitLock = @() ## Keep track of what programs have been started.
-[List[string]]$RemainingOptions = $AllOptions
+$RemainingOptions = @()
+$RemainingOptions += $AllOptions
 while ($Chosen -notcontains $AllOptions[-1]) {
     $Chosen = Read-Intent $RemainingOptions -Multiple
-    ## Mark all selected options as complete in the list, preventing their execution.
-    foreach ($Selected in $Chosen.Where({($_ -ne $AllOptions[-1]) -and
-        !($_.Contains("(Complete)")) -and !($_.Contains("(Unavailable)"))})) {
-        $Index = $RemainingOptions.IndexOf($Selected)
-        $RemainingOptions[$Index] = $RemainingOptions[$Index].Insert(0,"(Complete) ")
-
-        if (($RemainingOptions[-2] -eq $AllOptions[-2]) -and
-            ($AllOptions[1..$($AllOptions.GetUpperBound(0)-2)] -contains $Selected)) {
-            $RemainingOptions[-2] = $RemainingOptions[-2].Insert(0,"(Unavailable) ")
-        }
-
-    }
-
-    ## Handles "All Tasks" by setting $Chosen to everything but AV.
-    ## Unless of course the user selects AV as well.
+    ## Handles "All Tasks" by setting $Chosen to everything but AV Update.
+    ## Unless of course the user selects AV Update as well.
     if ($Chosen -contains $AllOptions[-2]) {
         if ($Chosen -contains $AllOptions[0]) { ## AV
             $Chosen = $AllOptions[0..$($AllOptions.GetUpperBound(0)-2)]
@@ -325,7 +306,6 @@ while ($Chosen -notcontains $AllOptions[-1]) {
         }
         $Chosen += $AllOptions[-1]
     }
-
     switch($Chosen) {
         $AllOptions[0]  { Update-AVSignature $ScriptDirectory }
         $AllOptions[1]  { Import-Identifier $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix" }
@@ -344,6 +324,17 @@ while ($Chosen -notcontains $AllOptions[-1]) {
         Default {
             Write-Host "Please only input numbers 0 to $($AllOptions.GetUpperBound(0)) and commas (i.e. 1,3,5)"
             Write-Host "Recieved Input $_"
+        }
+    }
+    ## Mark all selected options as complete in the list, preventing their execution.
+    foreach ($Selected in $Chosen.Where({($_ -ne $AllOptions[-1]) -and
+        !($_.Contains("(Complete)")) -and !($_.Contains("(Unavailable)"))})) {
+        $Index = $RemainingOptions.IndexOf($Selected)
+        $RemainingOptions[$Index] = $RemainingOptions[$Index].Insert(0,"(Complete) ")
+
+        if (($RemainingOptions[-2] -eq $AllOptions[-2]) -and
+            ($AllOptions[1..$($AllOptions.GetUpperBound(0)-2)] -contains $Selected)) {
+            $RemainingOptions[-2] = $RemainingOptions[-2].Insert(0,"(Unavailable) ")
         }
     }
     Write-Host

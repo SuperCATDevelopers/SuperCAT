@@ -1,2 +1,2 @@
-Last, First, Organization, Email
-Borries, Frederic, 52 CS, frederic.borries@us.af.mil
+Last, First, Email
+Borries, Frederic, frederic@fabiv.pw

@@ -9,17 +9,22 @@ function Set-Time {
     )
 
     if (!$NoPrompt) {
-        Write-Host
+        Write-Host "Setting system time zone to UTC..."
         Set-TimeZone -Id "UTC"
+        Write-Host
+        Write-Host "================================================"
         Write-Host "The current time is $([datetime]::now.ToUniversalTime().tostring("s")) UTC"
         Write-Host "Is the CMOS battery good and the time accurate?"
+        Write-Host "================================================"
         if ($(Read-Intent -TF)) { return Get-Date }
+        Write-Host "================================================"
         Write-Host "Would you like to change the system time?"
+        Write-Host "================================================"
         if (!$(Read-Intent -TF)) { return Get-Date }
     }
     $read = Read-Host -Prompt "Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
     Try {
-        return Set-Date -Date $([datetime]($read))
+        return Set-Date -Date $([datetime]($read).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
     }
     Catch {
         return Set-Time -NoPrompt
@@ -106,7 +111,7 @@ function Read-Intent {
             if ($Result -notmatch "^\d+(,\d+)*$") {
                 Write-Host "Please only input numbers and commas (i.e. 1,25,6)"
             }
-            elseif (( $ResultList -ge $OptionArray.Count ) -or ( $ResultList -lt 0 )) {
+            elseif (( [int[]]$ResultList -ge $OptionArray.Count ) -or ( $ResultList -lt 0 )) {
                 Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count - 1)"
             }
             elseif ($(Get-Duplicate $ResultList)) {
@@ -124,7 +129,7 @@ function Read-Intent {
             if ($Result -notmatch "\d+") {
                 Write-Host "Please only input one number (i.e. $($OptionArray.Count - 1))"
             }
-            elseif (( $Result -ge $OptionArray.Count ) -or ( $Result -lt 0 )) {
+            elseif (( [int]$Result -ge $OptionArray.Count ) -or ( $Result -lt 0 )) {
                 Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count -1)"
             }
             else {
