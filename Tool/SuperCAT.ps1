@@ -4,17 +4,114 @@
 ## ADDITIONAL DEVELOPERS IN CONTRIBUTORS.TXT
 ###############################################################################>
 
-######################### Module Imports #######################################
+#########################  Parameters  #########################################
+[CmdletBinding(DefaultParameterSetName="Interactive")]
+param (
+    [Alias("h","?")]
+    [Parameter(ParameterSetName="Cmdline")]
+    [Parameter(ParameterSetName="Interactive")]
+    [Switch]$Help,
 
+    [Parameter(ParameterSetName="Cmdline")]
+    [Parameter(ParameterSetName="Interactive")]
+    [Switch]$List,
+
+    [Parameter(Mandatory=$True,Position=0,ParameterSetName="Cmdline")]
+    [String]$Options,
+
+    [Parameter(Mandatory=$True,Position=1,ParameterSetName="Cmdline",
+    HelpMessage="Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. i.e. 2020-01-01T13:39:00")]
+    [String]$Time
+)
+
+##################### Early Variable Requirements ##############################
 $ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
 
-Import-Module -Force "$ScriptDirectory\Modules\Support.psm1" #Mandatory
+$AllOptions = @(
+    "Update Antivirus (Requires Pre-Approved Actions)",
+    "Collect Computer Information",
+    "Initialize Antivirus Scan",
+    "Collect Antivirus Logs",
+    "Initialize SCAP",
+    "Collect Windows Event Logs",
+    "All Tasks (No Antivirus Updating, Auto exits)",
+    "Exit Program"
+)
+$AdminRequired = @(
+    "Update Antivirus (Requires Pre-Approved Actions)",
+    "Initialize Antivirus Scan",
+    "Initialize SCAP",
+    "All Tasks (No Antivirus Updating, Auto exits)"
+)
 
-Import-Module -Force "$ScriptDirectory\Modules\Antivirus.psm1"
-Import-Module -Force "$ScriptDirectory\Modules\EventLogs.psm1"
-Import-Module -Force "$ScriptDirectory\Modules\GeneralCollection.psm1"
-Import-Module -Force "$ScriptDirectory\Modules\SCAP.psm1"
+$RemainingOptions = @()
+$RemainingOptions += $AllOptions
 
+############################# Module Import ####################################
+try {
+    Import-Module -Force -ErrorAction Stop "$ScriptDirectory\Modules\Support.psm1"
+} catch {
+    throw "Missing Support.psm1!"
+}
+
+try {Import-Module -Force -ErrorAction Stop "$ScriptDirectory\Modules\Antivirus.psm1"}
+catch {
+    Write-Warning "Missing Antivirus.psm1, unable to run, update, or import logs from antivirus."
+    $RemainingOptions[0] = $RemainingOptions[0].Insert(0,"(Unavailable) ")
+    $RemainingOptions[2] = $RemainingOptions[2].Insert(0,"(Unavailable) ")
+    $RemainingOptions[3] = $RemainingOptions[3].Insert(0,"(Unavailable) ")
+}
+try {Import-Module -Force -ErrorAction Stop "$ScriptDirectory\Modules\EventLogs.psm1"}
+catch {
+    Write-Warning "Missing EventLogs.psm1, unable to import event logs."
+    $RemainingOptions[5] = $RemainingOptions[5].Insert(0,"(Unavailable) ")
+}
+try {Import-Module -Force -ErrorAction Stop "$ScriptDirectory\Modules\GeneralCollection.psm1"}
+catch {
+    Write-Warning "Missing GeneralCollection.psm1, unable to collect general information."
+    $RemainingOptions[1] = $RemainingOptions[1].Insert(0,"(Unavailable) ")
+}
+try {Import-Module -Force -ErrorAction Stop "$ScriptDirectory\Modules\SCAP.psm1"}
+catch {
+    Write-Warning "Missing SCAP.psm1, unable to run SCAP."
+    $RemainingOptions[4] = $RemainingOptions[4].Insert(0,"(Unavailable) ")
+}
+
+## Mark "All Tasks" unavailable if any of the functions are unavailable.
+if ($RemainingOptions[1..$($RemainingOptions.GetUpperBound(0)-2)] -contains "(Unavailable) ") {
+    $RemainingOptions[-2] = $RemainingOptions[-2].Insert(0,"(Unavailable) ")
+}
+
+##################### Parameter Processing #####################################
+if (($Help) -or ($List)) {
+    if ($Help) {
+        Write-Host "Help information" ## TODO: Fill in
+    }
+    if (($Help) -or ($List)) {
+        Write-Host "The following are your options, please"
+        Write-Host "input only numbers and commas (i.e. 1,25,6):"
+        for ($i=0; $i -lt $AllOptions.Count; $i++) {
+            Write-Host $i "=" $AllOptions[$i]
+        }
+    }
+    exit
+}
+if ( $Options ) {
+    $ResultList = $Options.Split(",")
+    if ($Options -notmatch "^\d+(,\d+)*$") {
+        throw "Please only input numbers and commas (i.e. 1,25,6)"
+    }
+    elseif (( [int[]]$ResultList -ge $AllOptions.Count ) -or ( $ResultList -lt 0 )) {
+        throw "Please ensure your entry is between 0 and $($AllOptions.Count - 1)"
+    }
+    elseif ($(Get-Duplicate $ResultList)) {
+        throw "Please ensure there are no duplicates in your entry."
+    }
+    else {
+        $Chosen = $AllOptions[$ResultList]
+    }
+    $NoInteractive=$True
+} else { $NoInteractive=$False }
 
 ######################### Configuration Handling ###############################
 
@@ -24,7 +121,10 @@ function Import-Config {
     param (
         [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
         [ValidateNotNullOrEmpty()]
-        [String]$File
+        [String]$File,
+
+        [Parameter()]
+        [Bool]$NoInteractive
     )
     $Version = [System.Version]"0.2.2"
     if (Test-Path -Path $File -PathType Leaf) {
@@ -34,6 +134,12 @@ function Import-Config {
         Catch {
             throw "The file $File incorrectly formated, please delete to force recreation."
         }
+    }
+    elseif ( Test-Path -Path $File -PathType Container ) {
+        throw "$File is a directory!"
+    }
+    elseif ( $NoInteractive ) {
+        throw "Please run interactively to generate config.xml first."
     }
     else {
         $Config = [PSCustomObject]@{
@@ -60,7 +166,10 @@ function Update-Config {
 
         [Parameter(Mandatory=$True,Position=1)]
         [ValidateNotNullOrEmpty()]
-        [String]$RootDirectory
+        [String]$RootDirectory,
+
+        [Parameter()]
+        [Bool]$NoInteractive
     )
     function Read-SystemVersion {
         # .SYNOPSIS
@@ -113,6 +222,9 @@ function Update-Config {
         Where-Object {$_.Dependent -Like $Env:SystemDrive})})}).SerialNumber
     $Config.LastAccessTimeUTC = Get-Date
     if ($Config.KnownDrives.Keys -NotContains $LocalDrive) {
+        if ($NoInteractive) {
+            throw "Please run interactively first to generate config.xml"
+        }
         if ($Config.KnownDrives.Count -gt 0) {
             Write-Host "================================================"
             Write-Host "Unknown drive. Would you like to add this `ndrive to database?"
@@ -140,8 +252,10 @@ function Update-Config {
     while ($True) {
         Write-Host
         Write-Host "================================================"
-        Write-Host "Is this information correct?"
-        Write-Host
+        if (!$NoInteractive) {
+            Write-Host "Is this information correct?"
+            Write-Host
+        }
         Write-Host "Location            = $($Config.Location)"
         Write-Host "Organization        = $($Config.ScanningOrg)"
         Write-Host "Drive Name          = $($Config.KnownDrives.$LocalDrive.DriveName)"
@@ -150,7 +264,7 @@ function Update-Config {
         Write-Host "System Owner        = $($Config.KnownDrives.$LocalDrive.SystemOwner)"
         Write-Host "Classification      = $($Config.KnownDrives.$LocalDrive.Classification)"
         Write-Host "================================================"
-        if ($(Read-Intent -TF)) { Write-Host; break }
+        if ($NoInteractive -or $(Read-Intent -TF)) { Write-Host; break }
         $Config.KnownDrives.$LocalDrive.LastWriteTimeUTC = Get-Date
         $Config.LastWriteTimeUTC = Get-Date
         $SelectionArray = @(
@@ -242,32 +356,28 @@ function Get-LogPrefix {
 if(([Security.Principal.WindowsPrincipal](
     [Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator) -eq $False){
-
-    Write-Warning "THIS SCRIPT WAS NOT RUN AS AN ADMINISTRATOR! SOME TASKS MAY NOT WORK OR PROVIDE INACCURATE RESULTS!"
+    Write-Warning "THIS SCRIPT WAS NOT RUN AS AN ADMINISTRATOR!"
+    Write-Warning "SOME TASKS ARE UNAVAILABLE OR MAY PROVIDE INCOMPLETE RESULTS!"
+    foreach ($Item in $AdminRequired) {
+        $Index = $RemainingOptions.IndexOf($Item)
+        if ($RemainingOptions[$Index] -notcontains "(Unavailable) ") {
+            $RemainingOptions[$Index] = $RemainingOptions[$Index].Insert(0,"(Unavailable) ")
+        }
+    }
 }
 
 ## Fix time on the laptop, and set it to UTC
-Set-Time | Out-Null
+Set-Time $Time | Out-Null
 
-$Config = Import-Config "$ScriptDirectory\config.xml" |
-    Update-Config -RootDirectory $ScriptDirectory |
+$Config = Import-Config "$ScriptDirectory\config.xml" -NoInteractive $NoInteractive |
+    Update-Config -RootDirectory $ScriptDirectory -NoInteractive $NoInteractive |
     Export-Config "$ScriptDirectory\config.xml" -PassThru
 $LogPrefix = Get-LogPrefix $Config $ScriptDirectory
-$AllOptions = @(
-    "Update Antivirus (Requires Pre-Approved Actions)",
-    "Collect Computer Information",
-    "Initialize Antivirus Scan",
-    "Collect Antivirus Logs",
-    "Initialize SCAP",
-    "Collect Windows Event Logs",
-    "All Tasks (No Antivirus Updating, Auto exits)",
-    "Exit Program"
-)
 $ExitLock = @() ## Keep track of what programs have been started.
-$RemainingOptions = @()
-$RemainingOptions += $AllOptions
-while ($Chosen -notcontains $AllOptions[-1]) {
-    $Chosen = Read-Intent $RemainingOptions -Multiple
+while (($Chosen -notcontains $AllOptions[-1]) -or ($Options)) {
+    if (!($Options)) {
+        $Chosen = Read-Intent $RemainingOptions -Multiple
+    }
     ## Handles "All Tasks" by setting $Chosen to everything but AV Update.
     ## Unless of course the user selects AV Update as well.
     if ($Chosen -contains $AllOptions[-2]) {
@@ -292,7 +402,7 @@ while ($Chosen -notcontains $AllOptions[-1]) {
             Write-Host "Skipping $($_.Remove(0, 11)); already run"
         }
         {$_.Contains("(Unavailable) ")} {
-            Write-Host "Skipping $($_.Remove(0, 14)); some elements already run."
+            Write-Host "Skipping $($_.Remove(0, 14)); some elements run, module not imported, or running as user."
         }
         Default {
             Write-Host "Please only input numbers 0 to $($AllOptions.GetUpperBound(0)) and commas (i.e. 1,3,5)"
@@ -301,7 +411,7 @@ while ($Chosen -notcontains $AllOptions[-1]) {
     }
     ## Mark all selected options as complete in the list, preventing their execution.
     foreach ($Selected in $Chosen.Where({($_ -ne $AllOptions[-1]) -and
-        !($_.Contains("(Complete)")) -and !($_.Contains("(Unavailable)"))})) {
+        ($_ -notcontains "(Complete)") -and ($_ -notcontains "(Unavailable)")})) {
         $Index = $RemainingOptions.IndexOf($Selected)
         $RemainingOptions[$Index] = $RemainingOptions[$Index].Insert(0,"(Complete) ")
 
@@ -311,6 +421,7 @@ while ($Chosen -notcontains $AllOptions[-1]) {
         }
     }
     Write-Host
+    if ( $Options ) { break }
 }
 
 ## Prevent exiting if ExitLock still has an active process
