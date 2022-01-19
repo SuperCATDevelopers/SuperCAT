@@ -73,3 +73,7 @@ v0.3.4
 - Removed development environment artifact.
 - Implemented issue #43, write out drive serial number.
 - Changed function nouns to singular iaw PS style guide.
+
+v0.3.5
+- Implemented commandline arguments.
+- Implemented administrative check for options.

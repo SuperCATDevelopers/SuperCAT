@@ -1,5 +1,5 @@
 <###############################################################################
-## SUPERCAT (CYBER ASSESSMENT TOOL) V0.3.4
+## SUPERCAT (CYBER ASSESSMENT TOOL) V0.3.5
 ## DEVELOPED BY: SSGT CLINTON REEL // CLINTON.REEL@US.AF.MIL
 ## ADDITIONAL DEVELOPERS IN CONTRIBUTORS.TXT
 ###############################################################################>
@@ -28,7 +28,7 @@ param (
 
 ##################### Early Variable Requirements ##############################
 
-$ScriptVersion = [System.Version]"0.3.4"
+$ScriptVersion = [System.Version]"0.3.5"
 
 $ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
 
