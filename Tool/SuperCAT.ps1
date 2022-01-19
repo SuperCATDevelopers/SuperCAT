@@ -19,12 +19,17 @@ param (
     [Parameter(Mandatory=$True,Position=0,ParameterSetName="Cmdline")]
     [String]$Options,
 
+    [Parameter(ParameterSetName="Interactive",
+    HelpMessage="Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS (i.e. 2020-01-01T13:39:00)")]
     [Parameter(Mandatory=$True,Position=1,ParameterSetName="Cmdline",
-    HelpMessage="Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. i.e. 2020-01-01T13:39:00")]
+    HelpMessage="Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS (i.e. 2020-01-01T13:39:00)")]
     [String]$Time
 )
 
 ##################### Early Variable Requirements ##############################
+
+$ScriptVersion = [System.Version]"0.3.4"
+
 $ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
 
 $AllOptions = @(
@@ -83,17 +88,39 @@ if ($RemainingOptions[1..$($RemainingOptions.GetUpperBound(0)-2)] -contains "(Un
 }
 
 ##################### Parameter Processing #####################################
-if (($Help) -or ($List)) {
-    if ($Help) {
-        Write-Host "Help information" ## TODO: Fill in
+
+if ($Help) {
+    Write-Host
+    Write-Host "SuperCAT version $($($ScriptVersion).ToString())"
+    Write-Host
+    Write-Host "System Requirements:"
+    Write-Host "Windows 7 or greater with Powershell 2 or greater."
+    Write-Host
+    Write-Host "Parameters:"
+    Write-Host "  -Help     Display this message."
+    Write-Host "  -List     Display only execution options"
+    Write-Host "  -Options  Select one or more execution options. Please"
+    Write-Host "            only input numbers and commas (i.e. 1,25,6)."
+    Write-Host "            Requires -Time"
+    Write-Host "  -Time     Set the system time in UTC. To skip, write"
+    Write-Host "            `"trust`". Please enter the date in the format"
+    Write-Host "            YYYY-MM-DDTHH:MM:SS (i.e. 2020-01-31T13:39:00)"
+    Write-Host
+    Write-Host "Execution Options:"
+    for ($i=0; $i -lt $AllOptions.Count; $i++) {
+        Write-Host $i "=" $AllOptions[$i]
     }
-    if (($Help) -or ($List)) {
-        Write-Host "The following are your options, please"
-        Write-Host "input only numbers and commas (i.e. 1,25,6):"
-        for ($i=0; $i -lt $AllOptions.Count; $i++) {
-            Write-Host $i "=" $AllOptions[$i]
-        }
+    Write-Host
+    exit
+}
+if ($List) {
+    Write-Host
+    Write-Host "The following are your options, please"
+    Write-Host "input only numbers and commas (i.e. 1,25,6):"
+    for ($i=0; $i -lt $AllOptions.Count; $i++) {
+        Write-Host $i "=" $AllOptions[$i]
     }
+    Write-Host
     exit
 }
 if ( $Options ) {
@@ -126,7 +153,7 @@ function Import-Config {
         [Parameter()]
         [Bool]$NoInteractive
     )
-    $Version = [System.Version]"0.2.2"
+    $ConfigVersion = [System.Version]"0.2.2"
     if (Test-Path -Path $File -PathType Leaf) {
         Try {
             $Config = $(Import-Clixml -ErrorAction Stop -Path $File)
@@ -143,7 +170,7 @@ function Import-Config {
     }
     else {
         $Config = [PSCustomObject]@{
-            ConfigVersion       = $Version
+            ConfigVersion       = $ConfigVersion
             CreationTimeUTC     = Get-Date
             LastAccessTimeUTC   = Get-Date
             LastWriteTimeUTC    = Get-Date
@@ -153,7 +180,7 @@ function Import-Config {
             KnownDrives         = @{}
         }
     }
-    if ($Config.ConfigVersion -ne $Version) { throw "Old config file, failing out."}
+    if ($Config.ConfigVersion -ne $ConfigVersion) { throw "Old config file, failing out."}
     Write-Host
     return $Config
 }
