@@ -33,21 +33,26 @@ function Import-AntivirusLog {
     # Sends any available antivirus logs to the location of the script.
 
     param (
-        [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
+        [Parameter(Mandatory=$True,Position=0)]
         [ValidateNotNullOrEmpty()]
-        [String]$LogPrefix
+        [String]$McAfeePrefix,
+
+        [Parameter(Mandatory=$True,Position=1)]
+        [ValidateNotNullOrEmpty()]
+        [String]$EventLogsPrefix
     )
 
-    if (!$(Test-Path $($LogPrefix | Split-Path))) { New-Item -ItemType Directory -Path $($LogPrefix | Split-Path) | Out-Null }
+    if (!$(Test-Path $($McAfeePrefix | Split-Path))) { New-Item -ItemType Directory -Path $($McAfeePrefix | Split-Path) | Out-Null }
+    if (!$(Test-Path $($EventLogsPrefix | Split-Path))) { New-Item -ItemType Directory -Path $($EventLogsPrefix | Split-Path) | Out-Null }
     Write-Host "Gathering scan logs..."
     if (Test-Path -PathType Leaf -Path "C:\ProgramData\McAfee\DestkopProtection\OnDemandScanLog.txt"){
-        Copy-Item -Path "C:\ProgramData\McAfee\DestkopProtection\OnDemandScanLog.txt" -Destination "$LogPrefix`_OnDemandScanLog.txt"
+        Copy-Item -Path "C:\ProgramData\McAfee\DestkopProtection\OnDemandScanLog.txt" -Destination "$McAfeePrefix`_OnDemandScanLog.txt"
     }
     if (Test-Path -PathType Leaf -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\*"){
-        Copy-Item -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\" -Destination "$LogPrefix`_EndpointSecurity\" -Recurse
+        Copy-Item -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\" -Destination "$McAfeePrefix`_EndpointSecurity\" -Recurse
     }
     if ($(wevtutil.exe el).Contains("Microsoft-Windows-Windows Defender/Operational")){
-        wevtutil.exe epl "Microsoft-Windows-Windows Defender/Operational" "$LogPrefix`_WindowsDefender.evtx"
+        wevtutil.exe epl "Microsoft-Windows-Windows Defender/Operational" "$EventLogsPrefix`_WindowsDefender.evtx"
     }
 }
 Export-ModuleMember -Function Import-AntivirusLog
