@@ -35,16 +35,19 @@ function Import-AntivirusLog {
     param (
         [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
         [ValidateNotNullOrEmpty()]
-        [String]$Directory
+        [String]$LogPrefix
     )
 
-    if (!$(Test-Path $Directory)) { New-Item -ItemType Directory -Path $Directory | Out-Null}
+    if (!$(Test-Path $($LogPrefix | Split-Path))) { New-Item -ItemType Directory -Path $($LogPrefix | Split-Path) | Out-Null }
     Write-Host "Gathering scan logs..."
-    if($Win32Caption -like "*Windows 7*"){
-        Copy-Item -Path "C:\ProgramData\McAfee\DestkopProtection\OnDemandScanLog.txt" -Destination "$Directory"
+    if (Test-Path -PathType Leaf -Path "C:\ProgramData\McAfee\DestkopProtection\OnDemandScanLog.txt"){
+        Copy-Item -Path "C:\ProgramData\McAfee\DestkopProtection\OnDemandScanLog.txt" -Destination "$LogPrefix`_OnDemandScanLog.txt"
     }
-    else{
-        Copy-Item -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\" -Destination "$Directory" -Recurse
+    if (Test-Path -PathType Leaf -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\*"){
+        Copy-Item -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\" -Destination "$LogPrefix`_EndpointSecurity\" -Recurse
+    }
+    if ($(wevtutil.exe el).Contains("Microsoft-Windows-Windows Defender/Operational")){
+        wevtutil.exe epl "Microsoft-Windows-Windows Defender/Operational" "$LogPrefix`_WindowsDefender.evtx"
     }
 }
 Export-ModuleMember -Function Import-AntivirusLog

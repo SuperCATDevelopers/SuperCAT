@@ -283,7 +283,7 @@ while ($Chosen -notcontains $AllOptions[-1]) {
         $AllOptions[0]  { Update-AVSignature $ScriptDirectory }
         $AllOptions[1]  { Import-Identifier $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix" }
         $AllOptions[2]  { $ExitLock += Start-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$LogPrefix" }
-        $AllOptions[3]  { Import-AntivirusLog "$ScriptDirectory\..\..\Outputs\AVLogs" }
+        $AllOptions[3]  { Import-AntivirusLog "$ScriptDirectory\..\..\Outputs\AVLogs\$LogPrefix" }
         $AllOptions[4]  { $ExitLock += Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)" }
         $AllOptions[5]  { Import-EventLog "$ScriptDirectory\..\..\Outputs\EventLogs\$LogPrefix"}
         $AllOptions[-2] { throw "`$AllOptions[-2] if statement failed to evaluate correctly." }
