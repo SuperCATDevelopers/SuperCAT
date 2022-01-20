@@ -245,14 +245,14 @@ if(([Security.Principal.WindowsPrincipal](
 
     Write-Warning "THIS SCRIPT WAS NOT RUN AS AN ADMINISTRATOR! SOME TASKS MAY NOT WORK OR PROVIDE INACCURATE RESULTS!"
 }
-
+$LogPath = "$ScriptDirectory..\..\Outputs"
 ## Fix time on the laptop, and set it to UTC
 Set-Time | Out-Null
+
 $Config = Import-Config "$ScriptDirectory\config.xml" |
     Update-Config -RootDirectory $ScriptDirectory |
     Export-Config "$ScriptDirectory\config.xml" -PassThru
 $LogPrefix = Get-LogPrefix $Config $ScriptDirectory
-$LogPath = "$ScriptDirectory..\..\Outputs"
 $AllOptions = @(
     "Update Antivirus (Requires Pre-Approved Actions)",
     "Collect Computer Information",
