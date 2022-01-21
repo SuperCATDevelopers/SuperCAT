@@ -21,7 +21,7 @@ if (Test-Path -Path "$ScriptDirectory\SuperCAT.lck") {
     Write-Host "delete SuperCAT.lck"
     exit
 } else {
-    New-Item -ItemType file "$ScriptDirectory\SuperCAT.lck"
+    New-Item -ItemType file "$ScriptDirectory\SuperCAT.lck" | Out-Null
 }
 
 
@@ -128,6 +128,9 @@ function Update-Config {
             Write-Host "================================================"
             if ( !$(Read-Intent -TF) ) {
                 Write-Host "Exiting! Nothing has been written."
+                if (Test-Path -Path "$ScriptDirectory\SuperCAT.lck") {
+                    Remove-Item -Path "$ScriptDirectory\SuperCAT.lck"
+                }
                 exit
             }
             else {
@@ -333,5 +336,4 @@ if (($ExitLock.Count -ne 0) -and ($ExitLock.HasExited -contains $False)) {
 
 if (Test-Path -Path "$ScriptDirectory\SuperCAT.lck") {
     Remove-Item -Path "$ScriptDirectory\SuperCAT.lck"
-    exit
 }
