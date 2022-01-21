@@ -282,7 +282,7 @@ while ($Chosen -notcontains $AllOptions[-1]) {
     switch($Chosen) {
         $AllOptions[0]  { Update-AVSignature $ScriptDirectory }
         $AllOptions[1]  { Import-Identifier $Config "$LogPath\GatheredLogs\$LogPrefix" }
-        $AllOptions[2]  { $ExitLock += Start-Antivirus $ScriptDirectory "$LogPath\AVLogs\$LogPrefix" }
+        $AllOptions[2]  { $ExitLock += Start-Antivirus $ScriptDirectory "$LogPath\McAfeeLogs\$LogPrefix" }
         $AllOptions[3]  { Import-AntivirusLog "$LogPath\McAfeeLogs\$LogPrefix" "$LogPath\EventLogs\$LogPrefix" }
         $AllOptions[4]  { $ExitLock += Start-SCAP $ScriptDirectory "$LogPath\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)" }
         $AllOptions[5]  { Import-EventLog "$LogPath\EventLogs\$LogPrefix"}
