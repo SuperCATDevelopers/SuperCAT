@@ -16,6 +16,15 @@ Import-Module -Force "$ScriptDirectory\Modules\GeneralCollection.psm1"
 Import-Module -Force "$ScriptDirectory\Modules\SCAP.psm1"
 
 
+if (Test-Path -Path "$ScriptDirectory\SuperCAT.lck") {
+    Write-Host "SuperCAT already running. If you believe this is an error,"
+    Write-Host "delete SuperCAT.lck"
+    exit
+} else {
+    New-Item -ItemType file "$ScriptDirectory\SuperCAT.lck"
+}
+
+
 ######################### Configuration Handling ###############################
 
 function Import-Config {
@@ -320,4 +329,9 @@ if (($ExitLock.Count -ne 0) -and ($ExitLock.HasExited -contains $False)) {
     Write-Host "Waiting for processes to finish up..."
     $ExitLock.WaitForExit()
     Write-Host "Done!"
+}
+
+if (Test-Path -Path "$ScriptDirectory\SuperCAT.lck") {
+    Remove-Item -Path "$ScriptDirectory\SuperCAT.lck"
+    exit
 }
