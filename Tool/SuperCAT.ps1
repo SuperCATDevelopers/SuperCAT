@@ -162,11 +162,7 @@ function Import-Config {
         [Parameter()]
         [Bool]$NoInteractive
     )
-<<<<<<< Updated upstream
-    $ConfigVersion = [System.Version]"0.2.2"
-=======
-    $Version = [System.Version]"0.2.3"
->>>>>>> Stashed changes
+    $ConfigVersion = [System.Version]"0.2.3"
     if (Test-Path -Path $File -PathType Leaf) {
         Try {
             $Config = $(Import-Clixml -ErrorAction Stop -Path $File)
