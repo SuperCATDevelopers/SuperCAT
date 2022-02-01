@@ -152,10 +152,10 @@ function Read-CSV {
         [Parameter(Mandatory=$True,Position=1)]
         [ValidateNotNullOrEmpty()]
         [String]$Column,
-        [Parameter(Position=2,Mandatory=$True,ParameterSetName="Select")]
+        [Parameter(Position=2,Mandatory=$False,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$Select,
-        [Parameter(Position=3,Mandatory=$True,ParameterSetName="Select")]
+        [Parameter(Position=3,Mandatory=$False,ParameterSetName="Select")]
         [PSCustomObject]$Config
     )
     Try {
