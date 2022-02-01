@@ -162,7 +162,11 @@ function Import-Config {
         [Parameter()]
         [Bool]$NoInteractive
     )
+<<<<<<< Updated upstream
     $ConfigVersion = [System.Version]"0.2.2"
+=======
+    $Version = [System.Version]"0.2.3"
+>>>>>>> Stashed changes
     if (Test-Path -Path $File -PathType Leaf) {
         Try {
             $Config = $(Import-Clixml -ErrorAction Stop -Path $File)
@@ -207,27 +211,6 @@ function Update-Config {
         [Parameter()]
         [Bool]$NoInteractive
     )
-    function Read-SystemVersion {
-        # .SYNOPSIS
-        # Request the version number from the user, validating the format.
-        Write-Host "================================================"
-        Write-Host "Please enter the version in the format MajorMinor"
-        Write-Host "Example: 10 for major version 1 minor verion 0"
-        Write-Host "================================================"
-        while ($True) {
-            try {
-                [int]$Result = Read-Host -Prompt "Version Number"
-            } catch {
-                Write-Host "Please enter a number."
-            }
-            if ($Result -gt 99) {
-                Write-Host "Please enter a version less than 99."
-            }
-            else {
-                return $([String]$Result).PadRight(2,"0")
-            }
-        }
-    }
     function Read-DriveName {
         # .SYNOPSIS
         # Ask the user for the drive number, padding to 3 digits.
@@ -283,7 +266,6 @@ function Update-Config {
             LastWriteTimeUTC    = Get-Date
             DriveName           = Read-DriveName
             SystemType          = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"
-            SystemVersion       = Read-SystemVersion
             SystemOwner         = Read-Host -Prompt "What organization does this system belong to"
             Classification      = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"
         }
@@ -299,7 +281,6 @@ function Update-Config {
         Write-Host "Organization        = $($Config.ScanningOrg)"
         Write-Host "Drive Name          = $($Config.KnownDrives.$LocalDrive.DriveName)"
         Write-Host "System Type         = $($Config.KnownDrives.$LocalDrive.SystemType)"
-        Write-Host "System Version      = $($Config.KnownDrives.$LocalDrive.SystemVersion)"
         Write-Host "System Owner        = $($Config.KnownDrives.$LocalDrive.SystemOwner)"
         Write-Host "Classification      = $($Config.KnownDrives.$LocalDrive.Classification)"
         Write-Host "================================================"
@@ -311,7 +292,6 @@ function Update-Config {
             "Organization",
             "Drive Name",
             "System Type",
-            "System Version",
             "System Owner",
             "Classification"
         )
@@ -320,9 +300,8 @@ function Update-Config {
             $SelectionArray[1] {$Config.ScanningOrg                             = Read-Host -Prompt "Organization"}
             $SelectionArray[2] {$Config.KnownDrives.$LocalDrive.DriveName       = Read-DriveName}
             $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"}
-            $SelectionArray[4] {$Config.KnownDrives.$LocalDrive.SystemVersion   = Read-SystemVersion}
-            $SelectionArray[5] {$Config.KnownDrives.$LocalDrive.SystemOwner     = Read-Host -Prompt "System Owner"}
-            $SelectionArray[6] {$Config.KnownDrives.$LocalDrive.Classification  = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"}
+            $SelectionArray[4] {$Config.KnownDrives.$LocalDrive.SystemOwner     = Read-Host -Prompt "System Owner"}
+            $SelectionArray[5] {$Config.KnownDrives.$LocalDrive.Classification  = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"}
             Default {throw "Update-Config switch fell through."}
         }
 
@@ -380,7 +359,6 @@ function Get-LogPrefix {
         -Config $Config
     $SystemOwner  = $Config.KnownDrives.$($Config.LastHDD).SystemOwner
     $Date         = $(Get-Date -Format "yyyyMMdd_HHmm" -Date $Config.LastAccessTimeUTC)
-    $Version      = $Config.KnownDrives.$($Config.LastHDD).SystemVersion #TODO: Remove Version from config
     $Drive        = $Config.KnownDrives.$($Config.LastHDD).DriveName
     if ($SCAP) {
         return "$ClassAbbreviation`_$SystemOwner`_$SystemAbbreviation`_$Drive`_$($Config.LastHDD)"
