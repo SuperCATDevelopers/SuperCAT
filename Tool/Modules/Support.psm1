@@ -146,16 +146,21 @@ function Read-CSV {
     # Pull an arbitrary CSV and request the user to pick a row from the
     # given column.
     param (
-        [Parameter(Mandatory=$True,Position=0)]
+        [Parameter(Mandatory=$True,Position=0,ParameterSetName="Default")]
+        [Parameter(Mandatory=$True,Position=0,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$CSVPath,
-        [Parameter(Mandatory=$True,Position=1)]
+        
+        [Parameter(Mandatory=$True,Position=1,ParameterSetName="Default")]
+        [Parameter(Mandatory=$True,Position=1,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$Column,
-        [Parameter(Position=2,Mandatory=$False,ParameterSetName="Select")]
+        
+        [Parameter(Position=2,Mandatory=$True,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$Select,
-        [Parameter(Position=3,Mandatory=$False,ParameterSetName="Select")]
+        
+        [Parameter(Position=3,Mandatory=$True,ParameterSetName="Select")]
         [PSCustomObject]$Config
     )
     Try {
