@@ -1,1 +1,6 @@
 Tool/config.json
+Tool/config.xml
+Tool/Scripts/SCAP/**
+Tool/Scripts/McAfeeAV_v2/DAT/**
+Tool/Scripts/McAfeeAV_v2/w32/**
+Tool/Scripts/McAfeeAV_v2/w64/**
