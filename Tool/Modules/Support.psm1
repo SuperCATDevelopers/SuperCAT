@@ -158,15 +158,20 @@ function Read-CSV {
     # Pull an arbitrary CSV and request the user to pick a row from the
     # given column.
     param (
-        [Parameter(Mandatory=$True,Position=0)]
+        [Parameter(Mandatory=$True,Position=0,ParameterSetName="Default")]
+        [Parameter(Mandatory=$True,Position=0,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$CSVPath,
-        [Parameter(Mandatory=$True,Position=1)]
+        
+        [Parameter(Mandatory=$True,Position=1,ParameterSetName="Default")]
+        [Parameter(Mandatory=$True,Position=1,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$Column,
+        
         [Parameter(Position=2,Mandatory=$True,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$Select,
+        
         [Parameter(Position=3,Mandatory=$True,ParameterSetName="Select")]
         [PSCustomObject]$Config
     )
@@ -176,19 +181,19 @@ function Read-CSV {
         throw "$CSVPath doesn't exist! Please reinstall SuperCAT or populate the list."
     }
     if ($Select) {
-        return if ($( $entry = $CSV | Where-Object {
+        return $(if ($( $entry = $CSV | Where-Object {
                 $_.Select -eq $Config.KnownDrives.$($Config.LastHDD).Select}).Select) {
             $entry
         } else {
             "ZZ"
-        }
+        })
     }
     $result = $(Read-Intent $CSV.$Column "What is is the $Column?")
-    return if ( $result -eq "Other") {
+    return $(if ( $result -eq "Other") {
         $(Read-Host -Prompt "What is the $Column")
     } else {
         $result
-    }
+    })
 }
 Export-ModuleMember -Function Read-CSV
 
