@@ -141,6 +141,44 @@ function Read-Intent {
 }
 Export-ModuleMember -Function Read-Intent
 
+function Read-CSV {
+    # .SYNOPSIS
+    # Pull an arbitrary CSV and request the user to pick a row from the
+    # given column.
+    param (
+        [Parameter(Mandatory=$True,Position=0)]
+        [ValidateNotNullOrEmpty()]
+        [String]$CSVPath,
+        [Parameter(Mandatory=$True,Position=1)]
+        [ValidateNotNullOrEmpty()]
+        [String]$Column,
+        [Parameter(Position=2,Mandatory=$True,ParameterSetName="Select")]
+        [ValidateNotNullOrEmpty()]
+        [String]$Select,
+        [Parameter(Position=3,Mandatory=$True,ParameterSetName="Select")]
+        [PSCustomObject]$Config
+    )
+    Try {
+        $CSV = Import-CSV -Path $CSVPath
+    } Catch {
+        throw "$CSVPath doesn't exist! Please reinstall SuperCAT or populate the list."
+    }
+    if ($Select) {
+        return if ($( $entry = $CSV | Where-Object {
+                $_.Select -eq $Config.KnownDrives.$($Config.LastHDD).Select}).Select) {
+            $entry
+        } else {
+            "ZZ"
+        }
+    }
+    $result = $(Read-Intent $CSV.$Column "What is is the $Column?")
+    return if ( $result -eq "Other") {
+        $(Read-Host -Prompt "What is the $Column")
+    } else {
+        $result
+    }
+}
+
 Try {
     Get-Command pause -ErrorAction Stop | Out-Null
 }

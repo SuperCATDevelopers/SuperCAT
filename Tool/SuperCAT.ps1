@@ -62,32 +62,6 @@ function Update-Config {
         [ValidateNotNullOrEmpty()]
         [String]$RootDirectory
     )
-
-    function Read-CSVColumn {
-        # .SYNOPSIS
-        # Pull an arbitrary CSV and request the user to pick a row from the
-        # given column.
-        param (
-            [Parameter(Mandatory=$True,Position=0)]
-            [ValidateNotNullOrEmpty()]
-            [String]$CSVPath,
-            [Parameter(Mandatory=$True,Position=1)]
-            [ValidateNotNullOrEmpty()]
-            [String]$Column
-        )
-        Try {
-            $CSV = Import-CSV -Path $CSVPath
-        } Catch {
-            throw "$CSVPath doesn't exist! Please reinstall SuperCAT or populate the list."
-        }
-
-        $result = $(Read-Intent $CSV.$Column "What is is the $Column?")
-        if ( $result -eq "Other") {
-            return $(Read-Host -Prompt "What is the $Column")
-        } else {
-            return $result
-        }
-    }
     function Read-SystemVersion {
         # .SYNOPSIS
         # Request the version number from the user, validating the format.
@@ -131,8 +105,12 @@ function Update-Config {
         }
     }
 
-    $LocalDrive = (Get-WMIObject Win32_PhysicalMedia |
-        Where-Object {$_.Tag -eq "\\.\PHYSICALDRIVE0"}).SerialNumber
+    $LocalDrive = $(Get-WmiObject Win32_PhysicalMedia |
+        Where-Object {$_.Dependent -eq $(
+        Get-WmiObject Win32_DiskDriveToDiskPartition |
+        Where-Object {$_.Dependent -eq $(
+        Get-WmiObject Win32_LogicalDiskToPartition |
+        Where-Object {$_.Dependent -Like $Env:SystemDrive})})}).SerialNumber
     $Config.LastAccessTimeUTC = Get-Date
     if ($Config.KnownDrives.Keys -NotContains $LocalDrive) {
         if ($Config.KnownDrives.Count -gt 0) {
@@ -153,10 +131,10 @@ function Update-Config {
             LastAccessTimeUTC   = Get-Date
             LastWriteTimeUTC    = Get-Date
             DriveName           = Read-DriveName
-            SystemType          = Read-CSVColumn "$RootDirectory\PlatformList.csv" "SystemName"
+            SystemType          = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"
             SystemVersion       = Read-SystemVersion
             SystemOwner         = Read-Host -Prompt "What organization does this system belong to"
-            Classification      = Read-CSVColumn "$RootDirectory\ClassificationList.csv" "Classification"
+            Classification      = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"
         }
     }
     while ($True) {
@@ -185,13 +163,13 @@ function Update-Config {
             "Classification"
         )
         switch($(Read-Intent $SelectionArray "What should be changed?")) {
-            $SelectionArray[0] {$Config.Location                                  = Read-Host -Prompt "Location"}
+            $SelectionArray[0] {$Config.Location                                = Read-Host -Prompt "Location"}
             $SelectionArray[1] {$Config.ScanningOrg                             = Read-Host -Prompt "Organization"}
             $SelectionArray[2] {$Config.KnownDrives.$LocalDrive.DriveName       = Read-DriveName}
-            $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-CSVColumn "$RootDirectory\PlatformList.csv" "SystemName"}
+            $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"}
             $SelectionArray[4] {$Config.KnownDrives.$LocalDrive.SystemVersion   = Read-SystemVersion}
             $SelectionArray[5] {$Config.KnownDrives.$LocalDrive.SystemOwner     = Read-Host -Prompt "System Owner"}
-            $SelectionArray[6] {$Config.KnownDrives.$LocalDrive.Classification  = Read-CSVColumn "$RootDirectory\ClassificationList.csv" "Classification"}
+            $SelectionArray[6] {$Config.KnownDrives.$LocalDrive.Classification  = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"}
             Default {throw "Update-Config switch fell through."}
         }
 
@@ -237,24 +215,24 @@ function Get-LogPrefix {
         [Parameter()]
         [Switch]$SCAP
     )
-    Try {
-        $PlatformList = Import-CSV -Path "$RootDirectory\PlatformList.csv"
-    } Catch {
-        throw "PlatformList.csv doesn't exist! Please reinstall SuperCAT."
-    }
-
-    $SystemAbbreviation = $(
-        $PlatformList | Where-Object {
-            $_.SystemName -eq $Config.KnownDrives.$($Config.LastHDD).SystemType
-        }).SystemAbbreviation
+    $ClassAbbreviation = Read-CSV `
+        -Path   "$RootDirectory\ClassificationList.csv" `
+        -Column "Classification" `
+        -Select "ClassificationAbbreviation" `
+        -Config $Config
+    $SystemAbbreviation =Read-CSV `
+        -Path   "$RootDirectory\SystemList.csv" `
+        -Column "SystemName" `
+        -Select "SystemAbbreviation" `
+        -Config $Config
     $SystemOwner  = $Config.KnownDrives.$($Config.LastHDD).SystemOwner
     $Date         = $(Get-Date -Format "yyyyMMdd_HHmm" -Date $Config.LastAccessTimeUTC)
-    $Version      = $Config.KnownDrives.$($Config.LastHDD).SystemVersion
+    $Version      = $Config.KnownDrives.$($Config.LastHDD).SystemVersion #TODO: Remove Version from config
     $Drive        = $Config.KnownDrives.$($Config.LastHDD).DriveName
     if ($SCAP) {
-        return "$SystemOwner`_$SystemAbbreviation$Version`_$Drive"
+        return "$ClassAbbreviation`_$SystemOwner`_$SystemAbbreviation`_$Drive`_$($Config.LastHDD)"
     } else {
-        return "$Date`_$SystemOwner`_$SystemAbbreviation$Version`_$Drive"
+        return "$ClassAbbreviation`_$Date`_$SystemOwner`_$SystemAbbreviation`_$Drive`_$($Config.LastHDD)"
     }
 }
 
