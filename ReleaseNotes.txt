@@ -25,6 +25,9 @@ v2.20
 - Fixed an issue where Move-Item commands mistakenly had -Recurse as a parameter.
 - Changed/simplified save location of exported/collected files; will now appear above the directory above where the script is ran.
 - Changed the $ComputerName_$SerialNumber.txt file holding basic user input to $ComputerName-Info.txt
+- Added EVTX QuickLook Analysis tool
+
+=======
 
 v0.3.0
 - BREAKING CHANGE Switched configuration file to XML for better object handling.
@@ -73,3 +76,4 @@ v0.3.4
 - Removed development environment artifact.
 - Implemented issue #43, write out drive serial number.
 - Changed function nouns to singular iaw PS style guide.
+
