@@ -404,7 +404,7 @@ if(([Security.Principal.WindowsPrincipal](
         }
     }
 }
-
+$LogPath = "$ScriptDirectory..\..\Outputs"
 ## Fix time on the laptop, and set it to UTC
 Set-Time $Time | Out-Null
 
@@ -430,11 +430,11 @@ while (($Chosen -notcontains $AllOptions[-1]) -or ($Options)) {
     }
     switch($Chosen) {
         $AllOptions[0]  { Update-AVSignature $ScriptDirectory }
-        $AllOptions[1]  { Import-Identifier $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix" }
-        $AllOptions[2]  { $ExitLock += Start-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$LogPrefix" }
-        $AllOptions[3]  { Import-AntivirusLog "$ScriptDirectory\..\..\Outputs\AVLogs" }
-        $AllOptions[4]  { $ExitLock += Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)" }
-        $AllOptions[5]  { Import-EventLog "$ScriptDirectory\..\..\Outputs\EventLogs\$LogPrefix"}
+        $AllOptions[1]  { Import-Identifier $Config "$LogPath\GatheredLogs\$LogPrefix" }
+        $AllOptions[2]  { $ExitLock += Start-Antivirus $ScriptDirectory "$LogPath\McAfeeLogs\$LogPrefix" }
+        $AllOptions[3]  { Import-AntivirusLog "$LogPath\McAfeeLogs\$LogPrefix" "$LogPath\EventLogs\$LogPrefix" }
+        $AllOptions[4]  { $ExitLock += Start-SCAP $ScriptDirectory "$LogPath\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)" }
+        $AllOptions[5]  { Import-EventLog "$LogPath\EventLogs\$LogPrefix"}
         $AllOptions[-2] { throw "`$AllOptions[-2] if statement failed to evaluate correctly." }
         $AllOptions[-1] { Out-Null }
         {$_.Contains("(Complete) ")} {
