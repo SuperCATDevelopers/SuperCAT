@@ -5,12 +5,15 @@ function Set-Time {
     # Provide a wrapper around Set-Date.
     param(
         [Parameter()]
-        [switch]$NoPrompt
+        [switch]$NoInitial,
+        [Parameter(Position=0)]
+        [string]$time
     )
-
-    if (!$NoPrompt) {
+    if (!$NoInitial) {
         Write-Host "Setting system time zone to UTC..."
         Set-TimeZone -Id "UTC"
+    }
+    if (!($NoInitial -or ($time))) {
         Write-Host
         Write-Host "================================================"
         Write-Host "The current time is $([datetime]::now.ToUniversalTime().tostring("s")) UTC"
@@ -22,16 +25,36 @@ function Set-Time {
         Write-Host "================================================"
         if (!$(Read-Intent -TF)) { return Get-Date }
     }
+    if ($time) {
+        if ($time -eq "trust") { return Get-Date }
+        Try {
+            return Set-Date -Date $([datetime]($time).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
+        }
+        Catch {
+            throw "Incorrect time format! Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
+        }
+    }
     $read = Read-Host -Prompt "Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
     Try {
         return Set-Date -Date $([datetime]($read).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
     }
     Catch {
-        return Set-Time -NoPrompt
+        return Set-Time -NoInitial
     }
 }
 Export-ModuleMember -Function Set-Time
 
+function Get-Duplicate {
+    param (
+        [Parameter(Mandatory=$True, Position = 0, ValueFromPipeline=$True)]
+        [Array]$Array
+    )
+    $Hashtable = @{}
+    $Array | ForEach-Object { $Hashtable[$_] = "" }
+    if ($Hashtable.Count -eq $Array.Count) { return $False }
+    else { return $True }
+}
+Export-ModuleMember -Function Get-Duplicate
 
 function Read-Intent {
     # .SYNOPSIS
@@ -70,24 +93,13 @@ function Read-Intent {
         else { return $False }
     }
 
-    function Get-Duplicate {
-        param (
-            [Parameter(Mandatory=$True, Position = 0, ValueFromPipeline=$True)]
-            [Array]$Array
-        )
-        $Hashtable = @{}
-        $Array | ForEach-Object { $Hashtable[$_] = "" }
-        if ($Hashtable.Count -eq $Array.Count) { return $False }
-        else { return $True }
-    }
-
     ## Attempt to cast the input to an array
     $OptionArray = $([array]($Options))
 
     ## Present Options to User
     Write-Host
     Write-Host "================================================"
-    if ( $Null -ne $PSBoundParameters.Prompt ) {
+    if ($Prompt) {
         Write-Host $Prompt
     }
     if ($Multiple) {
