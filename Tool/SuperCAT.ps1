@@ -1,400 +1,323 @@
-<###########################################################################################################
-## SUPERCAT (CYBER ASSESSMENT TOOL) V2.20
+<###############################################################################
+## SUPERCAT (CYBER ASSESSMENT TOOL) V0.3.4
 ## DEVELOPED BY: SSGT CLINTON REEL // CLINTON.REEL@US.AF.MIL
-###########################################################################################################>
-param (
-    [string] $Choices, 
-    [string] $System, 
-    [string] $Location,
-    [switch] $Confirm
-)
-Clear-Host
+## ADDITIONAL DEVELOPERS IN CONTRIBUTORS.TXT
+###############################################################################>
 
-###########################################################################################################
-## This section loads a JSON file that has configurations already pre-set. See setup-powershell.ps1
-## for additional information. After that, it grabs additional information.
-###########################################################################################################
+######################### Module Imports #######################################
 
-try{
-    $JSONConfig = Get-Content -Path "config.json" -ErrorAction Stop | ConvertFrom-JSON
+$ScriptDirectory = $MyInvocation.MyCommand.Path | Split-Path
+
+Import-Module -Force "$ScriptDirectory\Modules\Support.psm1" #Mandatory
+
+Import-Module -Force "$ScriptDirectory\Modules\Antivirus.psm1"
+Import-Module -Force "$ScriptDirectory\Modules\EventLogs.psm1"
+Import-Module -Force "$ScriptDirectory\Modules\GeneralCollection.psm1"
+Import-Module -Force "$ScriptDirectory\Modules\SCAP.psm1"
+
+
+######################### Configuration Handling ###############################
+
+function Import-Config {
+    # .SYNOPSIS
+    # Pull config object from file. Generates skeleton if necessary.
+    param (
+        [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
+        [ValidateNotNullOrEmpty()]
+        [String]$File
+    )
+    $Version = [System.Version]"0.2.2"
+    if (Test-Path -Path $File -PathType Leaf) {
+        Try {
+            $Config = $(Import-Clixml -ErrorAction Stop -Path $File)
+        }
+        Catch {
+            throw "The file $File incorrectly formated, please delete to force recreation."
+        }
+    }
+    else {
+        $Config = [PSCustomObject]@{
+            ConfigVersion       = $Version
+            CreationTimeUTC     = Get-Date
+            LastAccessTimeUTC   = Get-Date
+            LastWriteTimeUTC    = Get-Date
+            LastHDD             = ''
+            Location            = Read-Host -Prompt "Which location is this"
+            ScanningOrg         = Read-Host -Prompt "What is the scanning organization"
+            KnownDrives         = @{}
+        }
+    }
+    if ($Config.ConfigVersion -ne $Version) { throw "Old config file, failing out."}
+    Write-Host
+    return $Config
 }
-catch{
-    Write-Error "Could not find file 'config.json' in the current directory. Use the setup-powershell.ps1 script to create this file."
-    pause
-    exit
+function Update-Config {
+    # .SYNOPSIS
+    # Update config object, adding drive config if it doesn't exist.
+    param (
+        [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
+        [PSCustomObject]$Config,
+
+        [Parameter(Mandatory=$True,Position=1)]
+        [ValidateNotNullOrEmpty()]
+        [String]$RootDirectory
+    )
+    function Read-SystemVersion {
+        # .SYNOPSIS
+        # Request the version number from the user, validating the format.
+        Write-Host "================================================"
+        Write-Host "Please enter the version in the format MajorMinor"
+        Write-Host "Example: 10 for major version 1 minor verion 0"
+        Write-Host "================================================"
+        while ($True) {
+            try {
+                [int]$Result = Read-Host -Prompt "Version Number"
+            } catch {
+                Write-Host "Please enter a number."
+            }
+            if ($Result -gt 99) {
+                Write-Host "Please enter a version less than 99."
+            }
+            else {
+                return $([String]$Result).PadRight(2,"0")
+            }
+        }
+    }
+    function Read-DriveName {
+        # .SYNOPSIS
+        # Ask the user for the drive number, padding to 3 digits.
+        Write-Host "================================================"
+        Write-Host "Please enter the assigned drive number, between"
+        Write-Host "0 and 999. Example: 27"
+        Write-Host "================================================"
+        while ($True) {
+            try {
+                [int]$Result = Read-Host -Prompt "Drive Number"
+            } catch {
+                Write-Host "Please enter a number."
+            }
+            if ($Result -gt 999) {
+                Write-Host "Please enter a number less than 999."
+            }
+            else {
+                return $([String]$Result).PadLeft(3,"0")
+            }
+        }
+    }
+
+    $LocalDrive = $(Get-WmiObject Win32_PhysicalMedia |
+        Where-Object {$_.Dependent -eq $(
+        Get-WmiObject Win32_DiskDriveToDiskPartition |
+        Where-Object {$_.Dependent -eq $(
+        Get-WmiObject Win32_LogicalDiskToPartition |
+        Where-Object {$_.Dependent -Like $Env:SystemDrive})})}).SerialNumber
+    $Config.LastAccessTimeUTC = Get-Date
+    if ($Config.KnownDrives.Keys -NotContains $LocalDrive) {
+        if ($Config.KnownDrives.Count -gt 0) {
+            Write-Host "================================================"
+            Write-Host "Unknown drive. Would you like to add this `ndrive to database?"
+            Write-Host "================================================"
+            if ( !$(Read-Intent -TF) ) {
+                Write-Host "Exiting! Nothing has been written."
+                exit
+            }
+            else {
+                Write-Host "Adding drive to database."
+                Write-Host
+            }
+        }
+        $Config.KnownDrives.$LocalDrive = @{
+            CreationTimeUTC     = Get-Date
+            LastAccessTimeUTC   = Get-Date
+            LastWriteTimeUTC    = Get-Date
+            DriveName           = Read-DriveName
+            SystemType          = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"
+            SystemVersion       = Read-SystemVersion
+            SystemOwner         = Read-Host -Prompt "What organization does this system belong to"
+            Classification      = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"
+        }
+    }
+    while ($True) {
+        Write-Host
+        Write-Host "================================================"
+        Write-Host "Is this information correct?"
+        Write-Host
+        Write-Host "Location            = $($Config.Location)"
+        Write-Host "Organization        = $($Config.ScanningOrg)"
+        Write-Host "Drive Name          = $($Config.KnownDrives.$LocalDrive.DriveName)"
+        Write-Host "System Type         = $($Config.KnownDrives.$LocalDrive.SystemType)"
+        Write-Host "System Version      = $($Config.KnownDrives.$LocalDrive.SystemVersion)"
+        Write-Host "System Owner        = $($Config.KnownDrives.$LocalDrive.SystemOwner)"
+        Write-Host "Classification      = $($Config.KnownDrives.$LocalDrive.Classification)"
+        Write-Host "================================================"
+        if ($(Read-Intent -TF)) { Write-Host; break }
+        $Config.KnownDrives.$LocalDrive.LastWriteTimeUTC = Get-Date
+        $Config.LastWriteTimeUTC = Get-Date
+        $SelectionArray = @(
+            "Location",
+            "Organization",
+            "Drive Name",
+            "System Type",
+            "System Version",
+            "System Owner",
+            "Classification"
+        )
+        switch($(Read-Intent $SelectionArray "What should be changed?")) {
+            $SelectionArray[0] {$Config.Location                                = Read-Host -Prompt "Location"}
+            $SelectionArray[1] {$Config.ScanningOrg                             = Read-Host -Prompt "Organization"}
+            $SelectionArray[2] {$Config.KnownDrives.$LocalDrive.DriveName       = Read-DriveName}
+            $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"}
+            $SelectionArray[4] {$Config.KnownDrives.$LocalDrive.SystemVersion   = Read-SystemVersion}
+            $SelectionArray[5] {$Config.KnownDrives.$LocalDrive.SystemOwner     = Read-Host -Prompt "System Owner"}
+            $SelectionArray[6] {$Config.KnownDrives.$LocalDrive.Classification  = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"}
+            Default {throw "Update-Config switch fell through."}
+        }
+
+    }
+    $Config.KnownDrives.$LocalDrive.LastAccessTimeUTC = Get-Date
+    $Config.LastHDD = $LocalDrive
+    return $Config
+}
+function Export-Config {
+    #.SYNOPSIS
+    # Write config object to file.
+    param (
+        [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=1)]
+        [PSCustomObject]$Config,
+
+        [Parameter(Mandatory=$True,Position=0)]
+        [String]$File,
+
+        [Parameter()]
+        [Switch]$PassThru
+    )
+    #$Config | Select-Object -ExcludeProperty 'LastHDD' -Property * |
+    #  Export-Clixml -Depth 10 -Force -Path $File | Out-Null
+    $Config | Export-Clixml -Depth 10 -Force -Path $File | Out-Null
+    if ($PassThru) {
+        return $Config
+    }
+    else{
+        return $True
+    }
+}
+function Get-LogPrefix {
+    # .SYNOPSIS
+    # Pull system abbreviations and mesh config data to provide a log prefix.
+    param (
+        [Parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
+        [PSCustomObject]$Config,
+
+        [Parameter(Mandatory=$True,Position=1)]
+        [ValidateNotNullOrEmpty()]
+        [String]$RootDirectory,
+
+        [Parameter()]
+        [Switch]$SCAP
+    )
+    $ClassAbbreviation = Read-CSV `
+        -Path   "$RootDirectory\ClassificationList.csv" `
+        -Column "Classification" `
+        -Select "ClassificationAbbreviation" `
+        -Config $Config
+    $SystemAbbreviation =Read-CSV `
+        -Path   "$RootDirectory\SystemList.csv" `
+        -Column "SystemName" `
+        -Select "SystemAbbreviation" `
+        -Config $Config
+    $SystemOwner  = $Config.KnownDrives.$($Config.LastHDD).SystemOwner
+    $Date         = $(Get-Date -Format "yyyyMMdd_HHmm" -Date $Config.LastAccessTimeUTC)
+    $Version      = $Config.KnownDrives.$($Config.LastHDD).SystemVersion #TODO: Remove Version from config
+    $Drive        = $Config.KnownDrives.$($Config.LastHDD).DriveName
+    if ($SCAP) {
+        return "$ClassAbbreviation`_$SystemOwner`_$SystemAbbreviation`_$Drive`_$($Config.LastHDD)"
+    } else {
+        return "$ClassAbbreviation`_$Date`_$SystemOwner`_$SystemAbbreviation`_$Drive`_$($Config.LastHDD)"
+    }
 }
 
-$BaseName     = $JSONConfig.BaseName
-$System1      = $JSONConfig.System1
-$System2      = $JSONConfig.System2
-$System3      = $JSONConfig.System3
-$System4      = $JSONConfig.System4
-$System5      = $JSONConfig.System5
+################################ General #######################################
 
-$Location1    = $JSONConfig.Location1
-$Location2    = $JSONConfig.Location2
-$Location3    = $JSONConfig.Location3
-$Location4    = $JSONConfig.Location4
-$Location5    = $JSONConfig.Location5
+## Check for administrative privildges, warn if necessary, continue
+if(([Security.Principal.WindowsPrincipal](
+    [Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator) -eq $False){
 
-$Drive        = (Get-Location).path
-$GatherLogs   = "$Drive\..\..\Outputs\GatheredLogs"
-    New-Item -ItemType Directory -Path "$GatherLogs" | Out-Null
-$AVLogs       = "$Drive\..\..\Outputs\AVLogs"
-	New-Item -ItemType Directory -Path "$AVLogs" | Out-Null
-$SCAPLogs     = "$Drive\..\..\Outputs\SCAPLogs"
-	New-Item -ItemType Directory -Path "$SCAPLogs" | Out-Null
-$EventLogs    = "$Drive\..\..\Outputs\EventLogs"
-	New-Item -ItemType Directory -Path "$EventLogs" | Out-Null
-
-$Date         = Get-Date -Format "yy-MM-dd"
-$Win32OS      = Get-WMIObject -Class Win32_OperatingSystem
-$ComputerName = $Win32OS.PSComputerName
-$OSArch       = $Win32OS.OSArchitecture
-$PSVersion    = Get-Host | Select-Object Version
-###########################################################################################################
-
-###########################################################################################################
-## This snippet of code checks to see if the script is being ran as an administrator. If not, it notifies
-## the user that it may not work as intended.
-###########################################################################################################
-
-$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-if(($currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) -eq $False){
     Write-Warning "THIS SCRIPT WAS NOT RUN AS AN ADMINISTRATOR! SOME TASKS MAY NOT WORK OR PROVIDE INACCURATE RESULTS!"
 }
 
-###########################################################################################################
-## The user will provide a number or numbers (0-7) and the script writes it to an array. For each number, a
-## specific task sequence will be executed. If 6 is used, all tasks are performed.
-###########################################################################################################
-Write-Output "
-===============================================================
-Select from the following options, inputting only numbers and
-commas (i.e. 1,3,4,5):
+## Fix time on the laptop, and set it to UTC
+Set-Time | Out-Null
 
-0 = Update Antivirus (Requires Pre-Approved Actions)
-
-1 = Collect Computer Information
-2 = Initialize Antivirus Scan
-3 = Collect Antivirus Logs
-4 = Initialize SCAP
-5 = Collect Windows Event Logs
-6 = All Tasks (Collection Only, No Antivirus Updating)
-
-7 = Exit Program
-==============================================================="
-if($PSBoundParameters.ContainsKey("Choices")){
-    $Choices = $PSBoundParameters.Choices
-    Write-Output $Choices
-}
-else{
-    $Choices = Read-Host
-}
-
-while($Choices -notmatch "^[0-7,]*$"){
-    $Choices = Read-Host "Please only input numbers 0 to 7 and commas (i.e. 1,3,5)"
-}
-
-$Choices = $Choices.Split(",")
-
-###########################################################################################################
-## Option 0 updates the antivirus definitions on the system to what is available on the disc, but only if
-## the definitions are older.
-##
-## Note: This option is separated from the other tasks, for teams only looking to collect data.
-###########################################################################################################
-
-if(($Choices -Contains 0) -and ($Choices -NotContains 7)){
-    Write-Output "Checking DAT Signatures..."
-    $InstalledDAT = (Get-Childitem "C:\Program Files (x86)\Common Files\McAfee\Engine\avvscan.dat").CreationTime
-    $CATDAT       = (Get-Childitem "$Drive\AV\DAT\CM*").CreationTime
-    $CATDATName   = (Get-Childitem "$Drive\AV\DAT\CM*").Name
-
-    if($InstalledDAT -lt $CATDAT){
-        Write-Output "Installing new DAT Signatures..."
-
-        & "$Drive\AV\DAT\$CATDATName" /SILENT /F
-    }
-    else{
-        Write-Output "Installed DAT files are more up-to-date than what is on the disc."
-    }
-}
-
-###########################################################################################################
-## Option 1 gathers basic information about the system, including serial number, operating system and its
-## version, what type of system it is or what it is used for, and more.
-###########################################################################################################
-
-if((($Choices -Contains 1) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
-    $SerialNumber = (Get-WMIObject -Class Win32_BIOS).SerialNumber
-    $MACAddress   = (Get-WMIObject -Class Win32_NetworkAdapter | Where-Object {$Null -ne $_.MACaddress} | Select-Object -First 1).MACAddress
-    $HardDrives   = Get-PhysicalDisk | Select-Object FriendlyName,Model,SerialNumber,MediaType,BusType,HealthStatus,OperationalStatus,Usage,Size
-    $OSName       = $Win32OS.Caption
-    $OSVer        = $Win32OS.Version
-
-    Write-Output "
-    ===============================================================
-    The serial number for this system appears to be: $SerialNumber
-    Is this correct? (This may be wrong/not work on some systems.)
-    1 = Yes
-    2 = I'll type it myself.
-    ==============================================================="
-
-    if ($Confirm.IsPresent){
-        $SerialCheck = "1"
-        Write-Output $SerialCheck
-    }
-    else{
-        $SerialCheck = Read-Host
-        while($SerialCheck -notmatch "^[1-2]$"){
-            $SerialCheck = Read-Host "You must input either 1 or 2."
+$Config = Import-Config "$ScriptDirectory\config.xml" |
+    Update-Config -RootDirectory $ScriptDirectory |
+    Export-Config "$ScriptDirectory\config.xml" -PassThru
+$LogPrefix = Get-LogPrefix $Config $ScriptDirectory
+$AllOptions = @(
+    "Update Antivirus (Requires Pre-Approved Actions)",
+    "Collect Computer Information",
+    "Initialize Antivirus Scan",
+    "Collect Antivirus Logs",
+    "Initialize SCAP",
+    "Collect Windows Event Logs",
+    "All Tasks (No Antivirus Updating, Auto exits)",
+    "Exit Program"
+)
+$ExitLock = @() ## Keep track of what programs have been started.
+$RemainingOptions = @()
+$RemainingOptions += $AllOptions
+while ($Chosen -notcontains $AllOptions[-1]) {
+    $Chosen = Read-Intent $RemainingOptions -Multiple
+    ## Handles "All Tasks" by setting $Chosen to everything but AV Update.
+    ## Unless of course the user selects AV Update as well.
+    if ($Chosen -contains $AllOptions[-2]) {
+        if ($Chosen -contains $AllOptions[0]) { ## AV
+            $Chosen = $AllOptions[0..$($AllOptions.GetUpperBound(0)-2)]
         }
-        if($SerialCheck -eq 2){
-            $SerialNumber = Read-Host "Type the serial number you wish to input, then press Enter"
+        else { ## No AV
+            $Chosen = $AllOptions[1..$($AllOptions.GetUpperBound(0)-2)]
+        }
+        $Chosen += $AllOptions[-1]
+    }
+    switch($Chosen) {
+        $AllOptions[0]  { Update-AVSignature $ScriptDirectory }
+        $AllOptions[1]  { Import-Identifier $Config "$ScriptDirectory\..\..\Outputs\GatheredLogs\$LogPrefix" }
+        $AllOptions[2]  { $ExitLock += Start-Antivirus $ScriptDirectory "$ScriptDirectory\..\..\Outputs\AVLogs\$LogPrefix" }
+        $AllOptions[3]  { Import-AntivirusLog "$ScriptDirectory\..\..\Outputs\AVLogs" }
+        $AllOptions[4]  { $ExitLock += Start-SCAP $ScriptDirectory "$ScriptDirectory\..\..\Outputs\SCAPLogs\$(Get-LogPrefix $Config $ScriptDirectory -SCAP)" }
+        $AllOptions[5]  { Import-EventLog "$ScriptDirectory\..\..\Outputs\EventLogs\$LogPrefix"}
+        $AllOptions[-2] { throw "`$AllOptions[-2] if statement failed to evaluate correctly." }
+        $AllOptions[-1] { Out-Null }
+        {$_.Contains("(Complete) ")} {
+            Write-Host "Skipping $($_.Remove(0, 11)); already run"
+        }
+        {$_.Contains("(Unavailable) ")} {
+            Write-Host "Skipping $($_.Remove(0, 14)); some elements already run."
+        }
+        Default {
+            Write-Host "Please only input numbers 0 to $($AllOptions.GetUpperBound(0)) and commas (i.e. 1,3,5)"
+            Write-Host "Recieved Input $_"
         }
     }
+    ## Mark all selected options as complete in the list, preventing their execution.
+    foreach ($Selected in $Chosen.Where({($_ -ne $AllOptions[-1]) -and
+        !($_.Contains("(Complete)")) -and !($_.Contains("(Unavailable)"))})) {
+        $Index = $RemainingOptions.IndexOf($Selected)
+        $RemainingOptions[$Index] = $RemainingOptions[$Index].Insert(0,"(Complete) ")
 
-    ## Adds the generic information about the machine to a file.
-    Write-Output "Writing computer name, serial number, and base info..."
-    Add-Content -Value "Date: $Date" -Path "$GatherLogs\$ComputerName-Info.txt"
-    Add-Content -Value "PowerShell Version: $PSVersion" -Path "$GatherLogs\$ComputerName-Info.txt"
-    Add-Content -Value "Serial Number: $SerialNumber" -Path "$GatherLogs\$ComputerName-Info.txt"
-    Add-Content -Value "Computer Name: $ComputerName" -Path "$GatherLogs\$ComputerName-Info.txt"
-    Add-Content -Value "Operating System: $OSName" -Path "$GatherLogs\$ComputerName-Info.txt"
-    Add-Content -Value "Operating System Version: $OSVer" -Path "$GatherLogs\$ComputerName-Info.txt"
-    Add-Content -Value "Base: $BaseName" -Path "$GatherLogs\$ComputerName-Info.txt"
-    Add-Content -Value "MAC Address: $MACAddress" -Path "$GatherLogs\$ComputerName-Info.txt"
-
-    $HardDrives | Export-CSV -Path "$GatherLogs\$ComputerName-HardDrives.csv" -NoTypeInformation
-
-    Write-Output "Writing hard drive information..."
-
-    ## Based on what is in the JSON file, it writes the System names and asks the user which system
-    ## the machine belongs to. Then, it writes it to file.
-    Write-Output "
-    ===============================================================
-    What type of system is this?
-    1 = $System1
-    2 = $System2
-    3 = $System3
-    4 = $System4
-    5 = $System5
-    6 = Other (I will type it in)
-    ==============================================================="
-    if($PSBoundParameters.ContainsKey("System")){
-        $System = $PSBoundParameters.System
-    }
-    else{
-        $System = Read-Host
-    }
-    while($System -notmatch "^[1-6]$"){
-        $System = Read-Host "You must input a number between 1 and 6."
-    }
-
-    if($System -eq 1){
-        Add-Content -value "System: $System1" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($System -eq 2){
-        Add-Content -value "System: $System2" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($System -eq 3){
-        Add-Content -value "System: $System3" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($System -eq 4){
-        Add-Content -value "System: $System4" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($System -eq 5){
-        Add-Content -value "System: $System5" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($Location -eq 6){
-        Write-Output "Type in the System and press Enter"
-        $Location6 = Read-Host
-        Add-Content -value "Location: $System6" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-
-    ## Based on what is in the JSON file, it asks for the location of the machine (or you can write it in).
-    Write-Output "
-    ===============================================================
-    Where is this system located?
-    1 = $Location1
-    2 = $Location2
-    3 = $Location3
-    4 = $Location4
-    5 = $Location5
-    6 = Other (I will type it in)
-    ==============================================================="
-
-    if($PSBoundParameters.ContainsKey("Location")){
-        $Location = $PSBoundParameters.Location
-    }
-    else{
-        $Location = Read-Host
-    }
-
-    while($System -notmatch "^[1-6]$"){
-        $Location = Read-Host "You must input a number between 1 and 6."
-    }
-
-    if($Location -eq 1){
-        Add-Content -value "Location: $Location1" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($Location -eq 2){
-        Add-Content -value "Location: $Location2" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($Location -eq 3){
-        Add-Content -value "Location: $Location3" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($Location -eq 4){
-        Add-Content -value "Location: $Location4" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($Location -eq 5){
-        Add-Content -value "Location: $Location5" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-    elseif($Location -eq 6){
-        Write-Output "Type in the location and press Enter"
-        $Location6 = Read-Host
-        Add-Content -value "Location: $Location6" -Path "$GatherLogs\$ComputerName-Info.txt"
-    }
-
-    # Systeminfo has a lot of additional information that will be written to a file.
-    Write-Output "Writing Systeminfo..."
-    systeminfo > "$GatherLogs\$ComputerName-SystemInfo.txt"
-
-    # This is a list of all of the relevant registry keys that have information about the installation of programs.
-    # After it gathers these items, it queries them for application information and sends it to a .CSV.
-    Write-Output "Gathering Installed Programs..."
-    $AppsRegistryLocations = (
-        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\",
-        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\",
-        "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
-    )
-
-    $Apps = Get-ChildItem $AppsRegistryLocations | Get-ItemProperty | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher,InstallLocation,InstallDate,DisplayIcon,URLInfoAbout,EstimatedSize
-
-    Write-Output "Found $($Apps.count) applications. Writing to CSV..."
-    $Apps | Export-CSV -NoTypeInformation -Path "$GatherLogs\$ComputerName-Programs.csv"
-
-    # Gathers information on the local users (are they active? are they disabled? are they locked? what accounts are available?)
-    Write-Output "Writing local users..."
-    Get-LocalUser | Select-Object Name,Enabled,PasswordRequired,PasswordExpires,LastLogon,SID | Export-CSV -NoTypeInformation -Path "$GatherLogs\$ComputerName-Accounts.csv"
-
-    # Gathers the open ports and active connections currently on the machine and writes to a .CSV.
-    Write-Output "Writing open ports..."
-    Get-NetTCPConnection | Export-CSV -NoTypeInformation -Path "$GatherLogs\$ComputerName-Ports.csv"
-
-    # Gathers the current services and sends it to a CSV.
-    Write-Output "Writing current processes..."
-    Get-Service | Select-Object Name,ServiceName,DisplayName,Status | Export-CSV -NoTypeInformation -Path "$GatherLogs\$ComputerName-Services.csv"
-}
-
-###########################################################################################################
-## Option 2 runs an antivirus scan on the machine, sending its logs to folder the script was executed from (i.e. CD).
-###########################################################################################################
-
-if((($Choices -Contains 2) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
-    # Conducts a scan on the machine.
-    Write-Output "Running antivirus scan..."
-    if($OSArch -eq "64-bit"){
-        .$Drive\AV\w64\SCAN /DRIVER=$Drive\AV\DAT /ANALYZE /ADL /SECURE /NOBREAK /TIMEOUT=10 /THREADS=64 /REPORT=$AVLogs\$ComputerName-AV-Report.txt /HTML $AVLogs\$ComputerName-AVREPORT.html
-    }
-    else{
-        .$Drive\AV\w32\SCAN /DRIVER=$Drive\AV\DAT /ANALYZE /ADL /SECURE /NOBREAK /TIMEOUT=10 /THREADS=64 /REPORT=$AVLogs\$ComputerName-AV-Report.txt /HTML $AVLogs\$ComputerName-AVREPORT.html
-    }
-}
-
-###########################################################################################################
-## Option 3 sends any available antivirus logs to the location of the script (i.e. CD).
-###########################################################################################################
-
-if((($Choices -Contains 3) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
-    # Gathers scan logs already on the machine.
-    Write-Output "Gathering scan logs..."
-    if($Win32Caption -like "*Windows 7*"){
-        Copy-Item -Path "C:\ProgramData\McAfee\DestkopProtection\OnDemandScanLog.txt" -Destination "$AVLogs"
-    }
-    else{
-        Copy-Item -Path "C:\ProgramData\McAfee\Endpoint Security\Logs\" -Destination "$AVLogs" -Recurse
-    }
-}
-
-###########################################################################################################
-## Option 4 runs the DISA SCAP tool to check on the system's STIG compliance, send it back for analysis.
-###########################################################################################################
-
-if((($Choices -Contains 4) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
-    # Conducts a SCAP check on the machine and writes it to a file.
-    if(test-path "$Drive\DISA\cscc.exe"){
-        Write-Output "Running SCAP Scan..."
-        & $Drive\DISA\cscc.exe -u $SCAPLogs
-    }
-
-    Write-Output "Moving SCAP results to easier to access folder..."
-    Move-Item -Path "$Drive\Results\" -Destination "$SCAPLogs"
-}
-
-###########################################################################################################
-## Option 5 gathers Windows Events logs and sends it to the location of the script (CD).
-###########################################################################################################
-
-if((($Choices -Contains 5) -or ($Choices -Contains 6)) -and ($Choices -NotContains 7)){
-    # Attempts to copy the Windows event logs to the disc for further analysis later.
-
-    Write-Output "Exporting Windows event logs to .evtx..."
-
-    wevtutil.exe epl System "$EventLogs\$ComputerName-System.evtx"
-    wevtutil.exe epl Security "$EventLogs\$ComputerName-Security.evtx"
-    wevtutil.exe epl Application "$EventLogs\$ComputerName-Application.evtx"
-}
-
-###########################################################################################################
-## Option 7 exits the program completely.
-###########################################################################################################
-
-if ($Choices -Contains 7){
-    Write-Output "No files have been transferred..."
-    Write-Output "Exiting tool..."
-    pause
-    exit
-}
-
-###########################################################################################################
-## Final clean-up of files on the disc. This will only run if options 1 to 6 are selected.
-###########################################################################################################
-
-if ($Choices -match "^[1-6]$"){
-    Write-Output "
-    ===============================================================
-    Assessment is completed!
-    Would you like to remove extra files/programs on $Drive ?
-    (This is useful if you are finalizing the disc.)
-    1 = Yes
-    2 = No
-    ==============================================================="
-    if ($Confirm.IsPresent){
-        $RemoveExtras = "2"
-        Write-Output $RemoveExtras
-    }
-    else{
-        $RemoveExtras = Read-Host
-
-        while($RemoveExtras -notmatch "^[1-2]$"){
-            $RemoveExtras = Read-Host "You must input either 1 or 2."
+        if (($RemainingOptions[-2] -eq $AllOptions[-2]) -and
+            ($AllOptions[1..$($AllOptions.GetUpperBound(0)-2)] -contains $Selected)) {
+            $RemainingOptions[-2] = $RemainingOptions[-2].Insert(0,"(Unavailable) ")
         }
     }
-
-    if($RemoveExtras -eq 1){
-        # Cleans up the disc of files no longer required.
-        Write-Output "Cleaning up extras..."
-        Remove-Item -Path "$Drive" -Recurse -ErrorAction SilentlyContinue
-        Remove-Item -Path "$Drive\..\Export" -Recurse -ErrorAction SilentlyContinue
-        Remove-Item -Path "$Drive\..\setup-powershell.ps1" -Recurse -ErrorAction SilentlyContinue
-        Remove-Item -Path "$Drive\..\setup-batch.bat" -Recurse -ErrorAction SilentlyContinue
-        Remove-Item -Path "$Drive\..\ReleaseNotes.txt" -Recurse -ErrorAction SilentlyContinue
-    }
+    Write-Host
 }
 
-Write-Output "Done!"
-if (!$Confirm.IsPresent){
-    pause
+## Prevent exiting if ExitLock still has an active process
+if (($ExitLock.Count -ne 0) -and ($ExitLock.HasExited -contains $False)) {
+    Write-Host "The following processes are still running: $($ExitLock.Where(
+        {$_.HasExited -eq $False}).ProcessName)"
+    Write-Host "Waiting for processes to finish up..."
+    $ExitLock.WaitForExit()
+    Write-Host "Done!"
 }
