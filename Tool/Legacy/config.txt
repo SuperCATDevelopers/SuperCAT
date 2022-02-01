@@ -1,10 +1,10 @@
-_BaseName=Shaw AFB 
-_System1=VIPER/CAPRE 
-_System2=Undefined 
+_BaseName=Undefined
+_System1=Undefined
+_System2= Undefined
 _System3=Undefined 
 _System4=Undefined 
 _System5=Undefined 
-_Location1=Building 1109 
+_Location1=Undefined
 _Location2=Undefined 
 _Location3=Undefined 
 _Location4=Undefined 

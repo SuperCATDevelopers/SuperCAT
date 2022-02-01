@@ -1,12 +1,12 @@
-v2.00 
+v2.00
 - Rewrote the original batch script into PowerShell.
 
-v2.01 
+v2.01
 - Added PowerShell calling for a .JSON file for configurations.
 - Added an additional external script to create the JSON file.
 - Added an additional external script to query .EVTX files.
 
-v2.10 
+v2.10
 - Fixed an issue where several values were not being added to a file.
 - Added check to remove files added to the local computer's temporary folder.
 - Added check to see if script was ran as administrator.
@@ -26,4 +26,54 @@ v2.20
 - Changed/simplified save location of exported/collected files; will now appear above the directory above where the script is ran.
 - Changed the $ComputerName_$SerialNumber.txt file holding basic user input to $ComputerName-Info.txt
 - Added EVTX QuickLook Analysis tool
-- Rearranged folder/file structure
+
+=======
+
+v0.3.0
+- BREAKING CHANGE Switched configuration file to XML for better object handling.
+- BREAKING CHANGE Regressed #42 Commandline arguments; pending reimplementation.
+- Rewrote script to utilize functions and modules.
+- Moved configuration generation into SuperCAT.ps1.
+- Added UI framework.
+- Implemented #50 .gitignore for config.xml
+- Provided for accurate-ish datetime on systems with dead a CMOS battery.
+- Moved towards compliance with Semantic Versioning 2.0.0 https://semver.org/
+  - Incremented to v0.3.0 due to API change.
+  - Selected major version 0 in move to Semantic Versioning due to lack of stable API. See https://semver.org/#spec-item-4
+
+v0.3.1
+- Implemented issue #52.
+- Switched to changing system time from getting time delta.
+- Restructured file system (again).
+- Implemented common naming scheme.
+  - yyyyMMdd_Scan#_MXUnit_SystemAbreviation+Version_DriveID_Filename
+  - 20211230_1_480AMXS_CA10_001_Info.txt
+- Incremented config.xml to v2.1.0.
+  - Tracked SystemVersion in config.xml
+
+v0.3.2
+- Fixed .gitignore.
+- Implemented hold for AV and SCAP completion.
+- Implemented duplication check in UI.
+- Accounted for running at midnight in filename generation.
+- Reduced confusion in menu by removing used options.
+  - Reimplemented main loop as for instead of while
+- Removed newlines for consistency.
+
+v0.3.3
+- Added check for config.xml version.
+- Incremented config.xml version: v2.2.0.
+  - Removed SystemVersion from config.xml.
+- Added newlines for clarity.
+- Removed unnecessary verbiage.
+- Switched from removing entries to marking completed in menu.
+- Added code comments for clarity.
+- Reimplemented main loop as while instead of for due to PS abnormalities.
+
+v0.3.4
+- Changed config.xml version to fit Semantic Versioning, v0.2.2.
+- Updated ReleaseNotes.txt.
+- Removed development environment artifact.
+- Implemented issue #43, write out drive serial number.
+- Changed function nouns to singular iaw PS style guide.
+

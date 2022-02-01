@@ -1,9 +1,14 @@
 name: PSScriptAnalyzer
 on: 
-  push:
-    branches:
-      - main
-  pull_request:
+  pull_request_target:
+      branches:
+        - main
+      paths:
+      - '**.ps1'
+      - '!tests/**'
+  
+  workflow_dispatch:
+  
 jobs:
   lint:
     name: Run PSSA
@@ -14,6 +19,8 @@ jobs:
       uses: devblackops/github-action-psscriptanalyzer@master
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
+        settingsPath: .github/workflows/PSASettings.psd1
         sendComment: true
+        failOnErrors: true
         failOnWarnings: false
         failOnInfos: false
