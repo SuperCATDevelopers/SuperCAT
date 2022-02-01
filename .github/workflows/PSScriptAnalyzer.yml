@@ -6,7 +6,7 @@ on:
     paths:
       - '**.ps1'
       - '!tests/**'
-  pull_request:
+  pull_request_target:
       branches:
         - main
       paths:
@@ -25,6 +25,8 @@ jobs:
       uses: devblackops/github-action-psscriptanalyzer@master
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
+        settingsPath: .github/workflows/PSASettings.psd1
         sendComment: true
+        failOnErrors: true
         failOnWarnings: false
         failOnInfos: false
