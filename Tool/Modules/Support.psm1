@@ -178,6 +178,7 @@ function Read-CSV {
         $result
     }
 }
+Export-ModuleMember -Function Read-CSV
 
 Try {
     Get-Command pause -ErrorAction Stop | Out-Null
