@@ -389,7 +389,7 @@ $LogPrefix = Get-LogPrefix $Config $ScriptDirectory
 $ExitLock = @() ## Keep track of what programs have been started.
 while (($Chosen -notcontains $AllOptions[-1]) -or ($Options)) {
     if (!($Options)) {
-        $Chosen = Read-Intent $RemainingOptions -Multiple
+        $Chosen = Read-Intent $RemainingOptions
     }
     ## Handles "All Tasks" by setting $Chosen to everything but AV Update.
     ## Unless of course the user selects AV Update as well.

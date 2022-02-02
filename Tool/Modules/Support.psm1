@@ -75,9 +75,6 @@ function Read-Intent {
         [Parameter(Position = 1, ParameterSetName = "Number")]
         [String]$Prompt,
 
-        [Parameter(ParameterSetName = "Number")]
-        [Switch]$Multiple,
-
         [Parameter(ParameterSetName = "TF", Mandatory=$True)]
         [Switch]$TF
     )
@@ -101,13 +98,7 @@ function Read-Intent {
         if ($Prompt) {
             Write-Host $Prompt
         }
-        if ($Multiple) {
-            Write-Host "Please select one or more of the following,"
-            Write-Host "inputting only numbers and commas (i.e. 1,25,6):"
-        }
-        else {
-            Write-Host "Input the associated number (i.e $($ShortList.Count - 1)):"
-        }
+        Write-Host "Input the associated number (i.e $($ShortList.Count - 1)):"
         Write-Host
         for ($i=0; $i -lt $ShortList.Count; $i++) {
             Write-Host $i "=" $ShortList[$i]
@@ -172,16 +163,16 @@ function Read-CSV {
         [Parameter(Mandatory=$True,Position=0,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$CSVPath,
-        
+
         [Parameter(Mandatory=$True,Position=1,ParameterSetName="Default")]
         [Parameter(Mandatory=$True,Position=1,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$Column,
-        
+
         [Parameter(Position=2,Mandatory=$True,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
         [String]$Select,
-        
+
         [Parameter(Position=3,Mandatory=$True,ParameterSetName="Select")]
         [PSCustomObject]$Config
     )
