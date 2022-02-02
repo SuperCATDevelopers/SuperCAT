@@ -28,7 +28,7 @@ function Set-Time {
     if ($time) {
         if ($time -eq "trust") { return Get-Date }
         Try {
-            return Set-Date -Date $([datetime]($time).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
+            return Set-Date -Date $($([datetime]($time)).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
         }
         Catch {
             throw "Incorrect time format! Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
@@ -36,7 +36,7 @@ function Set-Time {
     }
     $read = Read-Host -Prompt "Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
     Try {
-        return Set-Date -Date $([datetime]($read).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
+        return Set-Date -Date $($([datetime]($read)).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
     }
     Catch {
         return Set-Time -NoInitial
@@ -162,7 +162,7 @@ function Read-CSV {
         [Parameter(Mandatory=$True,Position=0,ParameterSetName="Default")]
         [Parameter(Mandatory=$True,Position=0,ParameterSetName="Select")]
         [ValidateNotNullOrEmpty()]
-        [String]$CSVPath,
+        [String]$Path,
 
         [Parameter(Mandatory=$True,Position=1,ParameterSetName="Default")]
         [Parameter(Mandatory=$True,Position=1,ParameterSetName="Select")]
@@ -177,9 +177,9 @@ function Read-CSV {
         [PSCustomObject]$Config
     )
     Try {
-        $CSV = Import-CSV -Path $CSVPath
+        $CSV = Import-CSV -Path $Path
     } Catch {
-        throw "$CSVPath doesn't exist! Please reinstall SuperCAT or populate the list."
+        throw "$Path doesn't exist! Please reinstall SuperCAT or populate the list."
     }
     if ($Select) {
         return $(if ($( $entry = $CSV | Where-Object {
