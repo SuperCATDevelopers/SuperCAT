@@ -93,60 +93,70 @@ function Read-Intent {
         else { return $False }
     }
 
-    ## Attempt to cast the input to an array
-    $OptionArray = $([array]($Options))
-
-    ## Present Options to User
-    Write-Host
-    Write-Host "================================================"
-    if ($Prompt) {
-        Write-Host $Prompt
-    }
-    if ($Multiple) {
-        Write-Host "Please select one or more of the following,"
-        Write-Host "inputting only numbers and commas (i.e. 1,25,6):"
-    }
-    else {
-        Write-Host "Input the associated number (i.e $($OptionArray.Count - 1)):"
-    }
-    Write-Host
-    for ($i=0; $i -lt $OptionArray.Count; $i++) {
-        Write-Host $i "=" $OptionArray[$i]
-    }
-    Write-Host "================================================"
-
-    ## Input Validation
-    if ($Multiple) {
-        while ($True) {
-            $Result = Read-Host -Prompt "Select"
-            $ResultList = $Result.Split(",")
-            if ($Result -notmatch "^\d+(,\d+)*$") {
-                Write-Host "Please only input numbers and commas (i.e. 1,25,6)"
-            }
-            elseif (( [int[]]$ResultList -ge $OptionArray.Count ) -or ( $ResultList -lt 0 )) {
-                Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count - 1)"
-            }
-            elseif ($(Get-Duplicate $ResultList)) {
-                Write-Host "Please ensure there are no duplicates in your entry."
-            }
-            else {
-                Write-Host
-                return $OptionArray[$ResultList]
-            }
+    for (($Page=1),
+    ($ShortList=$([array]($Options))[0..9]),
+    ($LastPage=[math]::Ceiling($([array]($Options)).count/10));$True;) {
+        Write-Host
+        Write-Host "================================================"
+        if ($Prompt) {
+            Write-Host $Prompt
         }
-    }
-    else {
-        while ($True) {
+        if ($Multiple) {
+            Write-Host "Please select one or more of the following,"
+            Write-Host "inputting only numbers and commas (i.e. 1,25,6):"
+        }
+        else {
+            Write-Host "Input the associated number (i.e $($ShortList.Count - 1)):"
+        }
+        Write-Host
+        for ($i=0; $i -lt $ShortList.Count; $i++) {
+            Write-Host $i "=" $ShortList[$i]
+        }
+        Write-Host
+        Write-Host "Page" $Page "of" $([string]$LastPage).PadRight(3," ") "    p for previous, n for next"
+        Write-Host "================================================"
+        :switchloop while ($True) {
             $Result = Read-Host -Prompt "Select"
-            if ($Result -notmatch "\d+") {
-                Write-Host "Please only input one number (i.e. $($OptionArray.Count - 1))"
-            }
-            elseif (( [int]$Result -ge $OptionArray.Count ) -or ( $Result -lt 0 )) {
-                Write-Host "Please ensure your entry is between 0 and $($OptionArray.Count -1)"
-            }
-            else {
-                Write-Host
-                return $OptionArray[$Result]
+            Switch ($Result) {
+                {$_ -notmatch "^\d+$|^[zxnp]$"} {
+                    if ($LastPage -eq 1) {
+                        Write-Host "Please only input one number (i.e. $($ShortList.Count - 1))"
+                    } else {
+                        Write-Host "Please enter a number between 0 and $($ShortList.Count - 1) or the"
+                        Write-Host "charters n or p for next page and previous page respectively."
+                    }
+                    Break
+                }
+                {$_ -match "^[zp]$"} {
+                    if ($Page -eq 1) {
+                        Write-Host "You're on the first page."
+                        Break
+                    } else {
+                        $Page--
+                        $ShortList=$([array]($Options))[(($Page-1)*10)..($Page*10-1)]
+                        Break switchloop
+                    }
+                }
+                {$_ -match "^[xn]$"} {
+                    if (!($LastPage-$Page)) {
+                        Write-Host "You're on the last page."
+                        Break
+                    } else {
+                        $Page++
+                        $ShortList=$([array]($Options))[(($Page-1)*10)..($Page*10-1)]
+                        Break switchloop
+                    }
+                }
+                {$([int]$_) -lt 0} {continue}
+                {$([int]$_) -ge $ShortList.Count} {
+                    Write-Host "Please ensure your entry is between 0 and $($ShortList.Count -1)."
+                    Break
+                }
+                Default {
+                    Write-Host "Switch term     = " $_
+                    Write-Host "ShortList.Count = " $ShortList.Count
+                    return $ShortList[$_]
+                }
             }
         }
     }
