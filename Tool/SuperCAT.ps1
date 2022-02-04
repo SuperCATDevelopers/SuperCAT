@@ -96,6 +96,9 @@ if ($Help) {
     Write-Host "System Requirements:"
     Write-Host "Windows 7 or greater with Powershell 2 or greater."
     Write-Host
+    Write-Host ".\SuperCAT.ps1 [-Help] [-List] [-Time TIME]"
+    Write-Host ".\SuperCAT.ps1 [-Help] [-List] -Time TIME -Options OPTION[,Option...]"
+    Write-Host
     Write-Host "Parameters:"
     Write-Host "  -Help     Display this message."
     Write-Host "  -List     Display only execution options"
@@ -105,6 +108,7 @@ if ($Help) {
     Write-Host "  -Time     Set the system time in UTC. To skip, write"
     Write-Host "            `"trust`". Please enter the date in the format"
     Write-Host "            YYYY-MM-DDTHH:MM:SS (i.e. 2020-01-31T13:39:00)"
+    Write-Host "                      ^ Notice the T"
     Write-Host
     Write-Host "Execution Options:"
     for ($i=0; $i -lt $AllOptions.Count; $i++) {
