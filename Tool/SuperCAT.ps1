@@ -207,7 +207,7 @@ function Update-Config {
         [Parameter()]
         [Bool]$NoInteractive
     )
-    function Read-DriveName {
+    function Read-DriveNumber {
         # .SYNOPSIS
         # Ask the user for the drive number, padding to 3 digits.
         Write-Host "================================================"
@@ -262,7 +262,7 @@ function Update-Config {
             CreationTimeUTC     = Get-Date
             LastAccessTimeUTC   = Get-Date
             LastWriteTimeUTC    = Get-Date
-            DriveName           = Read-DriveName
+            DriveNumber         = Read-DriveNumber
             SystemType          = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"
             SystemOwner         = Read-Host -Prompt "What organization does this system belong to"
             Classification      = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"
@@ -277,7 +277,7 @@ function Update-Config {
         }
         Write-Host "Location            = $($Config.Location)"
         Write-Host "Organization        = $($Config.ScanningOrg)"
-        Write-Host "Drive Number        = $($Config.KnownDrives.$LocalDrive.DriveName)"
+        Write-Host "Drive Number        = $($Config.KnownDrives.$LocalDrive.DriveNumber)"
         Write-Host "System Type         = $($Config.KnownDrives.$LocalDrive.SystemType)"
         Write-Host "System Owner        = $($Config.KnownDrives.$LocalDrive.SystemOwner)"
         Write-Host "Classification      = $($Config.KnownDrives.$LocalDrive.Classification)"
@@ -296,7 +296,7 @@ function Update-Config {
         switch($(Read-Intent $SelectionArray "What should be changed?")) {
             $SelectionArray[0] {$Config.Location                                = Read-Host -Prompt "Location"}
             $SelectionArray[1] {$Config.ScanningOrg                             = Read-Host -Prompt "Organization"}
-            $SelectionArray[2] {$Config.KnownDrives.$LocalDrive.DriveName       = Read-DriveName}
+            $SelectionArray[2] {$Config.KnownDrives.$LocalDrive.DriveNumber     = Read-DriveNumber}
             $SelectionArray[3] {$Config.KnownDrives.$LocalDrive.SystemType      = Read-CSV "$RootDirectory\SystemList.csv" "SystemName"}
             $SelectionArray[4] {$Config.KnownDrives.$LocalDrive.SystemOwner     = Read-Host -Prompt "System Owner"}
             $SelectionArray[5] {$Config.KnownDrives.$LocalDrive.Classification  = Read-CSV "$RootDirectory\ClassificationList.csv" "Classification"}
@@ -357,7 +357,7 @@ function Get-LogPrefix {
         -Config $Config
     $SystemOwner  = $Config.KnownDrives.$($Config.LastHDD).SystemOwner
     $Date         = $(Get-Date -Format "yyyyMMdd_HHmm" -Date $Config.LastAccessTimeUTC)
-    $Drive        = $Config.KnownDrives.$($Config.LastHDD).DriveName
+    $Drive        = $Config.KnownDrives.$($Config.LastHDD).DriveNumber
     if ($SCAP) {
         return "$ClassAbbreviation`_$SystemOwner`_$SystemAbbreviation`_$Drive`_$($Config.LastHDD)"
     } else {
