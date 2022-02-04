@@ -144,8 +144,6 @@ function Read-Intent {
                     Break
                 }
                 Default {
-                    Write-Host "Switch term     = " $_
-                    Write-Host "ShortList.Count = " $ShortList.Count
                     return $ShortList[$_]
                 }
             }
