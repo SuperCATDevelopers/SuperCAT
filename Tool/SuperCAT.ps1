@@ -230,11 +230,13 @@ function Update-Config {
     }
 
     $LocalDrive = $(Get-WmiObject Win32_PhysicalMedia |
+        Where-Object {$_.__Path -eq $(
+        Get-WmiObject Win32_DiskDrivePhysicalMedia |
         Where-Object {$_.Dependent -eq $(
         Get-WmiObject Win32_DiskDriveToDiskPartition |
         Where-Object {$_.Dependent -eq $(
         Get-WmiObject Win32_LogicalDiskToPartition |
-        Where-Object {$_.Dependent -Like $Env:SystemDrive})})}).SerialNumber
+        Where-Object {$_.Dependent -match $Env:SystemDrive}).Antecedent}).Antecedent}).Antecedent}).SerialNumber
     $Config.LastAccessTimeUTC = Get-Date
     if ($Config.KnownDrives.Keys -NotContains $LocalDrive) {
         if ($NoInteractive) {
