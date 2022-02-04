@@ -277,7 +277,7 @@ function Update-Config {
         }
         Write-Host "Location            = $($Config.Location)"
         Write-Host "Organization        = $($Config.ScanningOrg)"
-        Write-Host "Drive Name          = $($Config.KnownDrives.$LocalDrive.DriveName)"
+        Write-Host "Drive Number        = $($Config.KnownDrives.$LocalDrive.DriveName)"
         Write-Host "System Type         = $($Config.KnownDrives.$LocalDrive.SystemType)"
         Write-Host "System Owner        = $($Config.KnownDrives.$LocalDrive.SystemOwner)"
         Write-Host "Classification      = $($Config.KnownDrives.$LocalDrive.Classification)"
@@ -288,7 +288,7 @@ function Update-Config {
         $SelectionArray = @(
             "Location",
             "Organization",
-            "Drive Name",
+            "Drive Number",
             "System Type",
             "System Owner",
             "Classification"
