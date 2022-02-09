@@ -34,7 +34,10 @@ function Set-Time {
             throw "Incorrect time format! Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
         }
     }
-    $read = Read-Host -Prompt "Please enter the UTC date and time in the format YYYY-MM-DDTHH:MM:SS. Ex 2020-01-01T13:39:00"
+    Write-Host "Please enter the UTC date and time in the format"
+    Write-Host "YYYY-MM-DDTHH:MM:SS (i.e. 2020-01-01T13:39:00)"
+    Write-Host "          ^                         ^ Notice the T"
+    $read = Read-Host -Prompt "Time"
     Try {
         return Set-Date -Date $($([datetime]($read)).addminutes($(Get-TimeZone).BaseUtcOffset.TotalMinutes))
     }
