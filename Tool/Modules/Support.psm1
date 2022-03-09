@@ -190,9 +190,9 @@ function Read-CSV {
             "ZZ"
         })
     }
-    $result = $(Read-Intent $CSV.$Column "What is is the $Column?")
+    $result = $(Read-Intent $CSV.$Column "What is the $($Column.ToString())?")
     return $(if ( $result -eq "Other") {
-        $(Read-Host -Prompt "What is the $Column")
+        $(Read-Host -Prompt "What is the $($Column)")
     } else {
         $result
     })
